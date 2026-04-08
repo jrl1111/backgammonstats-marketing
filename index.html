@@ -854,6 +854,11 @@
       font-weight: 600;
     }
     .form-success.show { display: block; }
+    .form-success.error {
+      background: rgba(239,68,68,0.1);
+      border-color: rgba(239,68,68,0.3);
+      color: #dc2626;
+    }
     @media (max-width: 600px) {
       .checkbox-grid { grid-template-columns: 1fr; }
     }
@@ -1409,18 +1414,55 @@
   </footer>
 
   <script>
-    function handleSignup(e) {
+    // Supabase waitlist endpoint (public anon key — RLS enforces insert-only)
+    const SUPABASE_URL = 'https://srrzdtmmezexzbfcfaws.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycnpkdG1tZXpleHpiZmNmYXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzI5NjcsImV4cCI6MjA5MDkwODk2N30.rbuPz_CoZoDhgW37XqAbAdLVeWLAv7250uOGQR4WUqM';
+
+    async function handleSignup(e) {
       e.preventDefault();
       const form = e.target;
-      const data = {
-        fullName: form.fullName.value,
-        email: form.email.value,
+      const btn = form.querySelector('button[type="submit"]');
+      const successEl = document.getElementById('formSuccess');
+
+      const payload = {
+        full_name: form.fullName.value.trim(),
+        email: form.email.value.trim().toLowerCase(),
         sites: Array.from(form.querySelectorAll('input[name="sites"]:checked')).map(i => i.value),
       };
-      console.log('Signup:', data);
-      try { localStorage.setItem('bgs_signup_' + Date.now(), JSON.stringify(data)); } catch (_) {}
-      document.getElementById('formSuccess').classList.add('show');
-      form.reset();
+
+      btn.disabled = true;
+      const originalLabel = btn.textContent;
+      btn.textContent = 'Submitting…';
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist_signups`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText}`);
+        }
+
+        successEl.textContent = "Thanks! You're on the waitlist — we'll be in touch soon.";
+        successEl.classList.add('show');
+        successEl.classList.remove('error');
+        form.reset();
+      } catch (err) {
+        console.error('Signup failed:', err);
+        successEl.textContent = "Something went wrong. Please try again or email us directly.";
+        successEl.classList.add('show', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
     }
 
     // Generate activity heatmap cells
