@@ -21,7 +21,7 @@ Edit `index.html` and push to main. Vercel auto-deploys in seconds.
 ## Signup form
 
 Both forms (the hero's email field and the full waitlist form) post to the
-Supabase table `waitlist_signups` (`full_name`, `email`, `sites[]`) with the
+Supabase table `waitlist_signups` (`full_name`, `email`, `sites[]`, `typical_pr`) with the
 public anon key; row-level security allows inserts only. `handleSignup` in the
 page's script is the only place sign-ups are sent. A failed request shows an
 error under the form and keeps what was typed.
