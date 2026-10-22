@@ -1,1516 +1,356 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BackgammonStats — Play sharper. Win more.</title>
-  <meta name="description" content="The analytics platform for backgammon players, online and over-the-board. 35+ interactive charts, PR tracking, opponent prep, dice grids, and more." />
-
-  <!-- Open Graph / Facebook / LinkedIn / iMessage / Slack -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://backgammonstats.com/" />
-  <meta property="og:title" content="BackgammonStats — Play sharper. Win more." />
-  <meta property="og:description" content="Analytics for backgammon players — online and over-the-board. 35+ interactive charts, PR tracking, opponent prep, and more." />
-  <meta property="og:image" content="https://backgammonstats.com/og-image.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="BackgammonStats — Play sharper. Win more." />
-  <meta property="og:site_name" content="BackgammonStats" />
-
-  <!-- Twitter / X -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://backgammonstats.com/" />
-  <meta name="twitter:title" content="BackgammonStats — Play sharper. Win more." />
-  <meta name="twitter:description" content="Analytics for backgammon players — online and over-the-board. 35+ interactive charts, PR tracking, opponent prep, and more." />
-  <meta name="twitter:image" content="https://backgammonstats.com/og-image.png" />
-
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0%25' stop-color='%236366f1'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><circle cx='16' cy='6' r='5' fill='url(%23g)'/><circle cx='16' cy='16' r='5' fill='url(%23g)' opacity='0.85'/><circle cx='16' cy='26' r='5' fill='url(%23g)' opacity='0.7'/></svg>" />
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    :root {
-      --bg: #fafbff;
-      --bg-2: #f4f6fc;
-      --card: #ffffff;
-      --card-alt: #f8fafc;
-      --border: #e2e8f0;
-      --border-strong: #cbd5e1;
-      --text: #0f172a;
-      --text-muted: #334155;
-      --text-dim: #64748b;
-      --card-radius: 16px;
-      --card-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.05);
-      --card-shadow-hover: 0 4px 10px rgba(15,23,42,0.06), 0 20px 40px rgba(59,130,246,0.12);
-      --accent: #3b82f6;
-      --accent-2: #0ea5e9;
-      --accent-3: #6366f1;
-      --win: #22c55e;
-      --loss: #ef4444;
-      --yellow: #eab308;
-      --amber: #f59e0b;
-      --sky: #0ea5e9;
-      --teal: #14b8a6;
-    }
-
-    html, body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      font-size: 16px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-      scroll-behavior: smooth;
-    }
-
-    /* Respect users who prefer reduced motion */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.001ms !important;
-        scroll-behavior: auto !important;
-      }
-    }
-
-    /* Skip link */
-    .skip-link {
-      position: absolute;
-      top: -100px;
-      left: 12px;
-      background: var(--accent);
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 700;
-      z-index: 100;
-    }
-    .skip-link:focus { top: 12px; }
-
-    /* Keyboard focus */
-    a:focus-visible, button:focus-visible, input:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-      border-radius: 6px;
-    }
-
-    body { overflow-x: hidden; }
-
-    /* Ambient background */
-    .bg-glow {
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse at top left, rgba(59,130,246,0.12), transparent 60%),
-        radial-gradient(ellipse at top right, rgba(14,165,233,0.1), transparent 60%),
-        radial-gradient(ellipse at bottom right, rgba(99,102,241,0.08), transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Backgammon points pattern — alternating triangles like a board */
-    .bg-points {
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='240' viewBox='0 0 120 240'><polygon points='0,0 60,0 30,180' fill='%233b82f6' fill-opacity='0.035'/><polygon points='60,0 120,0 90,180' fill='%230ea5e9' fill-opacity='0.032'/><polygon points='0,240 60,240 30,60' fill='%236366f1' fill-opacity='0.032'/><polygon points='60,240 120,240 90,60' fill='%233b82f6' fill-opacity='0.035'/></svg>");
-      background-size: 240px 480px;
-      mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
-      -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 85%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Floating checkers — subtle decorative circles */
-    .bg-checkers {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .bg-checkers .checker {
-      position: absolute;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9), rgba(59,130,246,0.25) 55%, rgba(59,130,246,0.12) 100%);
-      border: 1px solid rgba(59,130,246,0.18);
-      box-shadow: inset 0 -4px 10px rgba(59,130,246,0.15), 0 10px 30px rgba(59,130,246,0.08);
-    }
-    .bg-checkers .checker.alt {
-      background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.9), rgba(14,165,233,0.22) 55%, rgba(14,165,233,0.1) 100%);
-      border-color: rgba(14,165,233,0.18);
-    }
-    .bg-checkers .checker.dark {
-      background: radial-gradient(circle at 35% 30%, rgba(165,180,252,0.7), rgba(99,102,241,0.28) 55%, rgba(99,102,241,0.12) 100%);
-      border-color: rgba(99,102,241,0.22);
-    }
-    .bg-checkers .c1 { width: 140px; height: 140px; top: 8%; left: -40px; }
-    .bg-checkers .c2 { width: 90px; height: 90px; top: 22%; right: 6%; }
-    .bg-checkers .c3 { width: 180px; height: 180px; top: 55%; left: -60px; }
-    .bg-checkers .c4 { width: 110px; height: 110px; top: 72%; right: -30px; }
-    .bg-checkers .c5 { width: 70px; height: 70px; top: 40%; left: 45%; }
-    .bg-checkers .c6 { width: 60px; height: 60px; top: 88%; left: 30%; }
-    @media (max-width: 900px) {
-      .bg-checkers .c5, .bg-checkers .c6 { display: none; }
-    }
-
-    /* Navigation */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      backdrop-filter: blur(16px) saturate(150%);
-      background: rgba(250,251,255,0.8);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 32px;
-    }
-
-    .nav-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.4px;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .logo svg { width: 28px; height: 28px; }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      font-size: 14px;
-    }
-
-    .nav-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
-
-    .nav-links a:hover { color: var(--text); }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #fff !important;
-      font-weight: 800;
-      box-shadow: 0 4px 20px rgba(99,102,241,0.25);
-    }
-    .btn-primary, .btn-primary:visited, .btn-primary:hover { color: #fff !important; }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(99,102,241,0.4);
-    }
-
-    .btn-ghost {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border-strong);
-    }
-
-    .btn-ghost:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .btn-lg { padding: 14px 28px; font-size: 15px; }
-
-    /* Container */
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 32px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Hero */
-    .hero {
-      padding: 28px 0 20px;
-      text-align: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(99,102,241,0.08);
-      border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 100px;
-      padding: 5px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 12px;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 6px; height: 6px;
-      background: var(--accent);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--accent);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    h1 {
-      font-size: clamp(32px, 5vw, 52px);
-      font-weight: 900;
-      letter-spacing: -1.8px;
-      line-height: 1.05;
-      margin-bottom: 12px;
-      color: var(--text);
-    }
-
-    h1 .accent {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero-tagline {
-      font-size: clamp(16px, 1.6vw, 19px);
-      font-weight: 600;
-      color: var(--text);
-      max-width: 680px;
-      margin: 0 auto 10px;
-      line-height: 1.4;
-    }
-
-    .hero-sub {
-      font-size: 16px;
-      color: var(--text-muted);
-      max-width: 620px;
-      margin: 0 auto 18px;
-      line-height: 1.55;
-    }
-
-    .hero-cta {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 28px;
-    }
-
-    .coming-soon {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(14,165,233,0.08));
-      border: 1px solid rgba(59,130,246,0.25);
-      border-radius: 100px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .coming-soon a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .coming-soon a:hover { text-decoration: underline; }
-    .cs-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 12px var(--accent);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    /* ─── DASHBOARD MOSAIC (the big show) ─── */
-    .dashboard-mosaic {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 14px;
-      position: relative;
-    }
-
-    .dashboard-mosaic::before {
-      content: "";
-      position: absolute;
-      inset: -30px;
-      background: radial-gradient(ellipse at center, rgba(99,102,241,0.12), transparent 60%);
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .chart-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      padding: 16px;
-      box-shadow: var(--card-shadow);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .chart-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--card-shadow-hover);
-    }
-
-    .chart-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chart-sub {
-      font-size: 10px;
-      color: var(--text-dim);
-      margin-bottom: 10px;
-    }
-
-    /* KPI card */
-    .kpi-big {
-      grid-column: span 3;
-      padding: 18px;
-    }
-
-    .kpi-label {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
-    }
-
-    .kpi-val {
-      font-size: 32px;
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -1px;
-    }
-
-    .kpi-val.win { color: var(--win); }
-    .kpi-val.acc { color: var(--accent); }
-    .kpi-val.purple { color: var(--accent-2); }
-    .kpi-val.amber { color: var(--amber); }
-
-    .kpi-sub {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .kpi-sub .up { color: var(--win); font-weight: 700; }
-    .kpi-sub .down { color: var(--loss); font-weight: 700; }
-
-    /* Sparkline in KPI card */
-    .kpi-spark {
-      margin-top: 8px;
-      margin-left: -18px;
-      margin-right: -18px;
-      margin-bottom: -18px;
-      height: 36px;
-    }
-
-    .kpi-spark svg { display: block; width: 100%; height: 100%; }
-
-    /* Large chart */
-    .chart-large {
-      grid-column: span 8;
-    }
-
-    .chart-mid {
-      grid-column: span 4;
-    }
-
-    .chart-full {
-      grid-column: span 12;
-    }
-
-    .chart-6 {
-      grid-column: span 6;
-    }
-
-    .chart-wide {
-      grid-column: span 6;
-    }
-
-    /* SVG area */
-    .chart-viz {
-      width: 100%;
-    }
-
-    .chart-viz svg {
-      width: 100%;
-      display: block;
-      overflow: visible;
-    }
-
-    /* Score story bar */
-    .score-bar {
-      display: flex;
-      height: 28px;
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .score-seg {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    /* Tier bars (PR tiers) */
-    .tier-list { display: flex; flex-direction: column; gap: 6px; }
-    .tier-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 11px;
-    }
-    .tier-label {
-      width: 90px;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .tier-bar-outer {
-      flex: 1;
-      height: 14px;
-      background: var(--card-alt);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .tier-bar-inner {
-      height: 100%;
-      border-radius: 4px;
-    }
-    .tier-count {
-      width: 30px;
-      text-align: right;
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    /* Heatmap */
-    .heatmap {
-      display: grid;
-      grid-template-columns: repeat(26, 1fr);
-      gap: 3px;
-    }
-    .heat-cell {
-      aspect-ratio: 1/1;
-      border-radius: 2px;
-    }
-
-    /* Game plan bullets */
-    .gp-list { display: flex; flex-direction: column; gap: 8px; }
-    .gp-item {
-      display: flex;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text);
-      line-height: 1.5;
-    }
-    .gp-bullet {
-      color: var(--accent);
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-    .gp-item strong { color: var(--text); font-weight: 700; }
-
-    /* Stats bar */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      padding: 70px 0;
-      margin-top: 60px;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .stat { text-align: center; }
-
-    .stat-num {
-      font-size: 44px;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      line-height: 1;
-      margin-bottom: 8px;
-      letter-spacing: -1.5px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
-
-    /* Section */
-    section {
-      padding: 100px 0;
-      position: relative;
-    }
-
-    .section-eyebrow {
-      text-align: center;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 12px;
-    }
-
-    h2 {
-      font-size: clamp(38px, 5.5vw, 60px);
-      font-weight: 900;
-      letter-spacing: -2px;
-      line-height: 1.02;
-      text-align: center;
-      margin-bottom: 18px;
-    }
-
-    .section-sub {
-      text-align: center;
-      font-size: 17px;
-      color: var(--text-muted);
-      max-width: 640px;
-      margin: 0 auto 60px;
-      line-height: 1.6;
-    }
-
-    /* Feature grid */
-    .features {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-
-    .feature {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      padding: 30px;
-      box-shadow: var(--card-shadow);
-      transition: all 0.2s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .feature::before {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s;
-    }
-
-    .feature:hover {
-      border-color: rgba(59,130,246,0.3);
-      transform: translateY(-3px);
-      box-shadow: var(--card-shadow-hover);
-    }
-
-    .feature:hover::before { transform: scaleX(1); }
-
-    .feature-icon {
-      width: 48px; height: 48px;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.08));
-      border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 12px;
-      font-size: 24px;
-      margin-bottom: 18px;
-    }
-
-    .feature h3 {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 10px;
-    }
-
-    .feature p {
-      font-size: 15px;
-      color: var(--text-muted);
-      line-height: 1.65;
-    }
-
-    /* How it works */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      position: relative;
-    }
-
-    .steps::before {
-      content: "";
-      position: absolute;
-      top: 40px;
-      left: 15%;
-      right: 15%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
-      opacity: 0.3;
-      z-index: 0;
-    }
-
-    .step {
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .step-num {
-      width: 80px; height: 80px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--card);
-      border: 3px solid var(--accent);
-      border-radius: 50%;
-      font-size: 28px;
-      font-weight: 900;
-      color: var(--accent);
-      box-shadow: 0 4px 20px rgba(99,102,241,0.25);
-    }
-
-    .step h3 {
-      font-size: 19px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .step p {
-      font-size: 15px;
-      color: var(--text-muted);
-      line-height: 1.65;
-      max-width: 300px;
-      margin: 0 auto;
-    }
-
-    /* Audience */
-    .audience {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-    }
-
-    .audience-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      padding: 26px 24px;
-      text-align: center;
-      box-shadow: var(--card-shadow);
-      transition: all 0.2s;
-    }
-
-    .audience-card:hover {
-      border-color: rgba(59,130,246,0.35);
-      transform: translateY(-3px);
-      box-shadow: var(--card-shadow-hover);
-    }
-
-    .audience-icon { font-size: 36px; margin-bottom: 14px; }
-    .audience-card h4 {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    .audience-card p {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    /* Final CTA */
-    .final-cta {
-      background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.06));
-      border: 1px solid rgba(99,102,241,0.2);
-      border-radius: 28px;
-      padding: 72px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .final-cta::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 50%, rgba(99,102,241,0.12), transparent 40%),
-        radial-gradient(circle at 80% 50%, rgba(168,85,247,0.12), transparent 40%);
-      pointer-events: none;
-    }
-
-    .final-cta > * { position: relative; z-index: 1; }
-
-    .signup-form {
-      max-width: 520px;
-      margin: 24px auto 0;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .signup-form > .form-row > label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .fieldset-row { border: 0; padding: 0; margin: 0; }
-    .fieldset-row .form-label { padding: 0; }
-    .form-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-    .signup-form input[type="text"],
-    .signup-form input[type="email"] {
-      width: 100%;
-      margin-top: 6px;
-      padding: 11px 14px;
-      border: 1px solid var(--border-strong);
-      border-radius: 10px;
-      background: #fff;
-      font-size: 14px;
-      color: var(--text);
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .signup-form input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-    }
-    .checkbox-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-    }
-    .cb {
-      display: flex !important;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 500 !important;
-      color: var(--text) !important;
-      font-size: 13px !important;
-      transition: all 0.15s;
-    }
-    .cb:hover { border-color: var(--accent); background: rgba(59,130,246,0.04); }
-    .cb input { accent-color: var(--accent); }
-    .signup-form button { align-self: center; margin-top: 4px; }
-    .form-success {
-      display: none;
-      text-align: center;
-      padding: 12px;
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.3);
-      border-radius: 8px;
-      color: #16a34a;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .form-success.show { display: block; }
-    .form-success.error {
-      background: rgba(239,68,68,0.1);
-      border-color: rgba(239,68,68,0.3);
-      color: #dc2626;
-    }
-    @media (max-width: 600px) {
-      .checkbox-grid { grid-template-columns: 1fr; }
-    }
-    .final-cta h2 { margin-bottom: 16px; }
-    .final-cta p {
-      font-size: 18px;
-      color: var(--text-muted);
-      max-width: 520px;
-      margin: 0 auto 36px;
-      line-height: 1.6;
-    }
-
-    /* Footer */
-    footer {
-      padding: 50px 0 60px;
-      border-top: 1px solid var(--border);
-      margin-top: 80px;
-    }
-
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-
-    .footer-inner .logo { font-size: 14px; }
-    .footer-copy { font-size: 12px; color: var(--text-dim); }
-
-    /* Responsive */
-    @media (max-width: 1100px) {
-      .dashboard-mosaic { grid-template-columns: repeat(6, 1fr); }
-      .kpi-big, .chart-large, .chart-mid, .chart-6, .chart-wide { grid-column: span 3; }
-      .chart-full { grid-column: span 6; }
-    }
-
-    @media (max-width: 900px) {
-      .features, .steps, .audience, .stats-bar {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .steps::before { display: none; }
-      section { padding: 70px 0; }
-      .hero { padding: 20px 0 16px; }
-      .dashboard-mosaic { grid-template-columns: repeat(2, 1fr); }
-      .kpi-big, .chart-large, .chart-mid, .chart-6, .chart-wide, .chart-full { grid-column: span 2; }
-    }
-
-    @media (max-width: 600px) {
-      .features, .audience { grid-template-columns: 1fr; }
-      .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 30px; }
-      .nav-links a:not(.btn) { display: none; }
-      .dashboard-mosaic { grid-template-columns: 1fr; }
-      .kpi-big, .chart-large, .chart-mid, .chart-6, .chart-wide, .chart-full { grid-column: span 1; }
-    }
-  </style>
-</head>
-<body>
-  <a href="#main" class="skip-link">Skip to main content</a>
-  <div class="bg-glow"></div>
-  <div class="bg-points"></div>
-
-  <!-- Navigation -->
-  <nav aria-label="Primary">
-    <div class="nav-inner">
-      <a href="#" class="logo" aria-label="BackgammonStats home">
-        <svg viewBox="0 0 32 32">
-          <defs>
-            <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#6366f1" />
-              <stop offset="100%" stop-color="#a855f7" />
-            </linearGradient>
-          </defs>
-          <circle cx="16" cy="6" r="5" fill="url(#navGrad)" />
-          <circle cx="16" cy="16" r="5" fill="url(#navGrad)" opacity="0.85" />
-          <circle cx="16" cy="26" r="5" fill="url(#navGrad)" opacity="0.7" />
-        </svg>
-        BackgammonStats
-      </a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#how">How it works</a>
-        <a href="#players">For Players</a>
-        <a href="#signup" class="btn btn-primary">Sign Up for Updates</a>
-      </div>
-    </div>
-  </nav>
-
-  <main id="main">
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <header>
-        <div class="eyebrow">New: AI-powered match prep briefings</div>
-        <h1>Play sharper. <span class="accent">Win more.</span></h1>
-        <p class="hero-tagline">The analytics platform for backgammon players — online and over-the-board.</p>
-        <p class="hero-sub">
-          Upload every match, track your PR across industry-standard skill tiers, scout your opponents, and turn raw data into a winning edge.
-        </p>
-        <div class="hero-cta">
-          <div class="coming-soon" role="status" aria-live="polite">
-            <span class="cs-dot" aria-hidden="true"></span>
-            Coming Soon - <a href="#signup">Sign up for Updates</a>
-          </div>
-        </div>
-      </header>
-
-      <!-- ═══════ DASHBOARD MOSAIC — the big show ═══════ -->
-      <div class="dashboard-mosaic">
-
-        <!-- KPI 1: Win Rate -->
-        <div class="chart-card kpi-big">
-          <div class="kpi-label">Win Rate</div>
-          <div class="kpi-val win">62%</div>
-          <div class="kpi-sub">47W – 29L · <span class="up">↑ 8%</span></div>
-          <div class="kpi-spark">
-            <svg viewBox="0 0 120 36" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="wrFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#22c55e" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path d="M 0,28 L 15,25 L 30,27 L 45,22 L 60,18 L 75,20 L 90,14 L 105,10 L 120,8 L 120,36 L 0,36 Z" fill="url(#wrFill)"/>
-              <path d="M 0,28 L 15,25 L 30,27 L 45,22 L 60,18 L 75,20 L 90,14 L 105,10 L 120,8" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- KPI 2: PR -->
-        <div class="chart-card kpi-big">
-          <div class="kpi-label">Avg PR</div>
-          <div class="kpi-val acc">6.4</div>
-          <div class="kpi-sub">Expert tier · <span class="up">↓ 2.3</span></div>
-          <div class="kpi-spark">
-            <svg viewBox="0 0 120 36" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="prFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3"/>
-                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path d="M 0,10 L 15,12 L 30,15 L 45,13 L 60,18 L 75,16 L 90,22 L 105,25 L 120,28 L 120,36 L 0,36 Z" fill="url(#prFill)"/>
-              <path d="M 0,10 L 15,12 L 30,15 L 45,13 L 60,18 L 75,16 L 90,22 L 105,25 L 120,28" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- KPI 3: Improving Score -->
-        <div class="chart-card kpi-big">
-          <div class="kpi-label">Improving</div>
-          <div class="kpi-val win">+34</div>
-          <div class="kpi-sub"><span class="up">↑ Last 25 matches</span></div>
-          <div class="kpi-spark">
-            <svg viewBox="0 0 120 36" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="impFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
-                  <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path d="M 0,30 L 15,28 L 30,24 L 45,20 L 60,22 L 75,15 L 90,12 L 105,8 L 120,6 L 120,36 L 0,36 Z" fill="url(#impFill)"/>
-              <path d="M 0,30 L 15,28 L 30,24 L 45,20 L 60,22 L 75,15 L 90,12 L 105,8 L 120,6" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- KPI 4: Hot Streak -->
-        <div class="chart-card kpi-big">
-          <div class="kpi-label">Current Streak</div>
-          <div class="kpi-val amber">5W 🔥</div>
-          <div class="kpi-sub">Last 5 matches</div>
-          <div class="kpi-spark" style="display:flex;gap:3px;padding:0 18px 10px;align-items:flex-end;height:36px;margin:8px 0 0 0;">
-            <div style="flex:1;height:50%;background:#ef4444;border-radius:2px;opacity:0.7;"></div>
-            <div style="flex:1;height:60%;background:#ef4444;border-radius:2px;opacity:0.7;"></div>
-            <div style="flex:1;height:100%;background:#22c55e;border-radius:2px;"></div>
-            <div style="flex:1;height:80%;background:#22c55e;border-radius:2px;"></div>
-            <div style="flex:1;height:100%;background:#22c55e;border-radius:2px;"></div>
-            <div style="flex:1;height:90%;background:#22c55e;border-radius:2px;"></div>
-            <div style="flex:1;height:100%;background:#22c55e;border-radius:2px;"></div>
-          </div>
-        </div>
-
-        <!-- Big chart: PR Trend -->
-        <div class="chart-card chart-large">
-          <div class="chart-title">📈 PR Trend · Last 6 Months</div>
-          <div class="chart-sub">Your performance rating smoothed over time</div>
-          <div class="chart-viz">
-            <svg viewBox="0 0 520 180" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="heroPrFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
-                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <!-- Grid lines -->
-              <line x1="0" y1="40" x2="520" y2="40" stroke="#e2e8f0" stroke-dasharray="3 3"/>
-              <line x1="0" y1="80" x2="520" y2="80" stroke="#e2e8f0" stroke-dasharray="3 3"/>
-              <line x1="0" y1="120" x2="520" y2="120" stroke="#e2e8f0" stroke-dasharray="3 3"/>
-              <line x1="0" y1="160" x2="520" y2="160" stroke="#e2e8f0" stroke-dasharray="3 3"/>
-              <!-- Tier reference line -->
-              <line x1="0" y1="70" x2="520" y2="70" stroke="#22c55e" stroke-dasharray="4 4" stroke-opacity="0.5"/>
-              <text x="515" y="66" font-size="9" fill="#22c55e" font-weight="700" text-anchor="end">Expert</text>
-              <!-- Area fill -->
-              <path d="M 10,140 Q 60,130 100,120 T 200,115 T 280,100 T 360,85 T 440,70 T 510,60 L 510,180 L 10,180 Z" fill="url(#heroPrFill)"/>
-              <!-- Line -->
-              <path d="M 10,140 Q 60,130 100,120 T 200,115 T 280,100 T 360,85 T 440,70 T 510,60" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
-              <!-- Trend line -->
-              <line x1="10" y1="150" x2="510" y2="55" stroke="#ec4899" stroke-width="2" stroke-dasharray="8 4"/>
-              <!-- Dots -->
-              <circle cx="10" cy="140" r="4" fill="#22c55e"/>
-              <circle cx="100" cy="120" r="4" fill="#ef4444"/>
-              <circle cx="200" cy="115" r="4" fill="#22c55e"/>
-              <circle cx="280" cy="100" r="4" fill="#22c55e"/>
-              <circle cx="360" cy="85" r="4" fill="#ef4444"/>
-              <circle cx="440" cy="70" r="4" fill="#22c55e"/>
-              <circle cx="510" cy="60" r="5" fill="#22c55e" stroke="#fff" stroke-width="2"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- PR Tier Distribution -->
-        <div class="chart-card chart-mid">
-          <div class="chart-title">🏆 Skill Tiers</div>
-          <div class="chart-sub">Your matches by PR tier</div>
-          <div class="tier-list">
-            <div class="tier-row">
-              <span class="tier-label">World Class</span>
-              <div class="tier-bar-outer"><div class="tier-bar-inner" style="width:8%;background:#16a34a;"></div></div>
-              <span class="tier-count">6</span>
-            </div>
-            <div class="tier-row">
-              <span class="tier-label">Grandmaster</span>
-              <div class="tier-bar-outer"><div class="tier-bar-inner" style="width:18%;background:#22c55e;"></div></div>
-              <span class="tier-count">14</span>
-            </div>
-            <div class="tier-row">
-              <span class="tier-label">Expert</span>
-              <div class="tier-bar-outer"><div class="tier-bar-inner" style="width:42%;background:#86efac;"></div></div>
-              <span class="tier-count">32</span>
-            </div>
-            <div class="tier-row">
-              <span class="tier-label">Advanced</span>
-              <div class="tier-bar-outer"><div class="tier-bar-inner" style="width:24%;background:#facc15;"></div></div>
-              <span class="tier-count">18</span>
-            </div>
-            <div class="tier-row">
-              <span class="tier-label">Intermediate</span>
-              <div class="tier-bar-outer"><div class="tier-bar-inner" style="width:8%;background:#f97316;"></div></div>
-              <span class="tier-count">6</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Game Plan card -->
-        <div class="chart-card chart-6" style="background:linear-gradient(135deg, rgba(99,102,241,0.04), rgba(168,85,247,0.04));border-color:rgba(99,102,241,0.25);">
-          <div class="chart-title" style="color:var(--accent);">🎯 Game Plan · vs Todd</div>
-          <div class="chart-sub">Auto-generated rivalry briefing</div>
-          <div class="gp-list">
-            <div class="gp-item"><span class="gp-bullet">▸</span><span>You're <strong>5W–3L (62.5%)</strong> against Todd. Last 5: <strong>4W–1L</strong> — 🔥 hot streak.</span></div>
-            <div class="gp-item"><span class="gp-bullet">▸</span><span>You play <strong>2.3 PR points better</strong> on average. You're the stronger player.</span></div>
-            <div class="gp-item"><span class="gp-bullet">▸</span><span>Todd <strong>cubes aggressively</strong> (~2.5/match). Be ready for early pressure.</span></div>
-          </div>
-        </div>
-
-        <!-- Win Rate Heatmap -->
-        <div class="chart-card chart-6">
-          <div class="chart-title">🗓️ Activity Heatmap · Last 6 months</div>
-          <div class="chart-sub">Every day you played, color = win rate</div>
-          <div class="heatmap" id="heatmap"></div>
-        </div>
-
-        <!-- Top Opponents bar chart -->
-        <div class="chart-card chart-wide">
-          <div class="chart-title">👥 Top Opponents · Wins vs Losses</div>
-          <div class="chart-sub">Your most-played rivals</div>
-          <div class="chart-viz">
-            <svg viewBox="0 0 520 160" preserveAspectRatio="none">
-              <!-- Row 1: Todd -->
-              <text x="0" y="20" font-size="11" fill="#475569" font-weight="600">Todd</text>
-              <rect x="80" y="10" width="150" height="14" fill="#22c55e" rx="3"/>
-              <rect x="230" y="10" width="90" height="14" fill="#ef4444" rx="3"/>
-              <text x="330" y="20" font-size="10" fill="#22c55e" font-weight="700">62%</text>
-
-              <!-- Row 2: Lisoco -->
-              <text x="0" y="48" font-size="11" fill="#475569" font-weight="600">Lisoco</text>
-              <rect x="80" y="38" width="110" height="14" fill="#22c55e" rx="3"/>
-              <rect x="190" y="38" width="80" height="14" fill="#ef4444" rx="3"/>
-              <text x="280" y="48" font-size="10" fill="#22c55e" font-weight="700">58%</text>
-
-              <!-- Row 3: Ned -->
-              <text x="0" y="76" font-size="11" fill="#475569" font-weight="600">Ned</text>
-              <rect x="80" y="66" width="140" height="14" fill="#22c55e" rx="3"/>
-              <rect x="220" y="66" width="30" height="14" fill="#ef4444" rx="3"/>
-              <text x="260" y="76" font-size="10" fill="#22c55e" font-weight="700">82%</text>
-
-              <!-- Row 4: Compa -->
-              <text x="0" y="104" font-size="11" fill="#475569" font-weight="600">Compa</text>
-              <rect x="80" y="94" width="40" height="14" fill="#22c55e" rx="3"/>
-              <rect x="120" y="94" width="130" height="14" fill="#ef4444" rx="3"/>
-              <text x="260" y="104" font-size="10" fill="#ef4444" font-weight="700">24%</text>
-
-              <!-- Row 5: Saba -->
-              <text x="0" y="132" font-size="11" fill="#475569" font-weight="600">Saba</text>
-              <rect x="80" y="122" width="100" height="14" fill="#22c55e" rx="3"/>
-              <rect x="180" y="122" width="60" height="14" fill="#ef4444" rx="3"/>
-              <text x="250" y="132" font-size="10" fill="#22c55e" font-weight="700">62%</text>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Luck differential -->
-        <div class="chart-card chart-wide">
-          <div class="chart-title">🎲 Luck Differential</div>
-          <div class="chart-sub">You vs opponent luck over time</div>
-          <div class="chart-viz">
-            <svg viewBox="0 0 520 160" preserveAspectRatio="none">
-              <!-- Zero line -->
-              <line x1="0" y1="80" x2="520" y2="80" stroke="#cbd5e1" stroke-dasharray="4 3"/>
-              <text x="515" y="76" font-size="9" fill="#94a3b8" text-anchor="end">Even</text>
-              <!-- Bars (positive/negative) -->
-              <rect x="10" y="80" width="18" height="25" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="35" y="55" width="18" height="25" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="60" y="80" width="18" height="15" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="85" y="65" width="18" height="15" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="110" y="80" width="18" height="35" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="135" y="45" width="18" height="35" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="160" y="80" width="18" height="20" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="185" y="60" width="18" height="20" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="210" y="80" width="18" height="10" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="235" y="50" width="18" height="30" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="260" y="35" width="18" height="45" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="285" y="80" width="18" height="18" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="310" y="40" width="18" height="40" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="335" y="55" width="18" height="25" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="360" y="80" width="18" height="22" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="385" y="30" width="18" height="50" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="410" y="50" width="18" height="30" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="435" y="80" width="18" height="18" fill="#ef4444" opacity="0.7" rx="2"/>
-              <rect x="460" y="45" width="18" height="35" fill="#22c55e" opacity="0.7" rx="2"/>
-              <rect x="485" y="35" width="18" height="45" fill="#22c55e" opacity="0.7" rx="2"/>
-              <!-- Trend line -->
-              <path d="M 19,95 Q 150,85 280,70 T 510,55" fill="none" stroke="#6366f1" stroke-width="2" stroke-dasharray="6 3"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Type × Length heatmap -->
-        <div class="chart-card chart-full">
-          <div class="chart-title">🎯 Format Heatmap · Win Rate by Match Type × Length</div>
-          <div class="chart-sub">Darker = better win rate · Hover cells on the full dashboard for details</div>
-          <div class="chart-viz">
-            <svg viewBox="0 0 900 130" preserveAspectRatio="xMidYMid meet">
-              <!-- Headers -->
-              <text x="120" y="15" font-size="11" fill="#64748b" font-weight="700">3-pt</text>
-              <text x="260" y="15" font-size="11" fill="#64748b" font-weight="700">5-pt</text>
-              <text x="400" y="15" font-size="11" fill="#64748b" font-weight="700">7-pt</text>
-              <text x="540" y="15" font-size="11" fill="#64748b" font-weight="700">9-pt</text>
-              <text x="680" y="15" font-size="11" fill="#64748b" font-weight="700">11-pt</text>
-              <text x="820" y="15" font-size="11" fill="#64748b" font-weight="700">13-pt</text>
-
-              <!-- Row: Casual -->
-              <text x="10" y="45" font-size="11" fill="#0f172a" font-weight="700">Casual</text>
-              <rect x="90" y="25" width="120" height="26" fill="#86efac" rx="4"/><text x="150" y="42" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">52%</text>
-              <rect x="230" y="25" width="120" height="26" fill="#22c55e" rx="4"/><text x="290" y="42" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">68%</text>
-              <rect x="370" y="25" width="120" height="26" fill="#facc15" rx="4"/><text x="430" y="42" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">45%</text>
-              <rect x="510" y="25" width="120" height="26" fill="#e2e8f0" rx="4"/><text x="570" y="42" font-size="10" fill="#94a3b8" text-anchor="middle">—</text>
-              <rect x="650" y="25" width="120" height="26" fill="#e2e8f0" rx="4"/><text x="710" y="42" font-size="10" fill="#94a3b8" text-anchor="middle">—</text>
-              <rect x="790" y="25" width="120" height="26" fill="#e2e8f0" rx="4"/><text x="850" y="42" font-size="10" fill="#94a3b8" text-anchor="middle">—</text>
-
-              <!-- Row: Tournament -->
-              <text x="10" y="80" font-size="11" fill="#0f172a" font-weight="700">Tournament</text>
-              <rect x="90" y="60" width="120" height="26" fill="#facc15" rx="4"/><text x="150" y="77" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">47%</text>
-              <rect x="230" y="60" width="120" height="26" fill="#86efac" rx="4"/><text x="290" y="77" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">55%</text>
-              <rect x="370" y="60" width="120" height="26" fill="#22c55e" rx="4"/><text x="430" y="77" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">71%</text>
-              <rect x="510" y="60" width="120" height="26" fill="#16a34a" rx="4"/><text x="570" y="77" font-size="12" font-weight="900" fill="#fff" text-anchor="middle">78%</text>
-              <rect x="650" y="60" width="120" height="26" fill="#22c55e" rx="4"/><text x="710" y="77" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">64%</text>
-              <rect x="790" y="60" width="120" height="26" fill="#86efac" rx="4"/><text x="850" y="77" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">50%</text>
-
-              <!-- Row: Money -->
-              <text x="10" y="115" font-size="11" fill="#0f172a" font-weight="700">Money</text>
-              <rect x="90" y="95" width="120" height="26" fill="#f97316" rx="4"/><text x="150" y="112" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">38%</text>
-              <rect x="230" y="95" width="120" height="26" fill="#facc15" rx="4"/><text x="290" y="112" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">42%</text>
-              <rect x="370" y="95" width="120" height="26" fill="#86efac" rx="4"/><text x="430" y="112" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">54%</text>
-              <rect x="510" y="95" width="120" height="26" fill="#22c55e" rx="4"/><text x="570" y="112" font-size="12" font-weight="900" fill="#0f172a" text-anchor="middle">66%</text>
-              <rect x="650" y="95" width="120" height="26" fill="#e2e8f0" rx="4"/><text x="710" y="112" font-size="10" fill="#94a3b8" text-anchor="middle">—</text>
-              <rect x="790" y="95" width="120" height="26" fill="#e2e8f0" rx="4"/><text x="850" y="112" font-size="10" fill="#94a3b8" text-anchor="middle">—</text>
-            </svg>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section id="features">
-    <div class="container">
-      <div class="section-eyebrow">Everything you need</div>
-      <h2>Analytics built for backgammon</h2>
-      <p class="section-sub">
-        From performance rating trends to head-to-head matchup prep, every feature is designed around how serious players actually study the game.
-      </p>
-      <div class="features">
-        <article class="feature">
-          <div class="feature-icon">📈</div>
-          <h3>Performance Tracking</h3>
-          <p>Watch your PR improve over time with rolling averages, skill tier progression, and trend analysis across 10, 25, 50, 100+ match windows.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon">🎯</div>
-          <h3>Opponent Prep</h3>
-          <p>Auto-generated Game Plan briefings for every rival. Review head-to-head records, cube tendencies, and personal notes before your next match.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon">🎲</div>
-          <h3>Luck vs Skill Analysis</h3>
-          <p>Separate your pure skill wins from lucky ones. Track luck differentials, detect variance patterns, and see your true strength.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon">🎥</div>
-          <h3>Video + Notes</h3>
-          <p>Link YouTube videos to matches. Add timestamped notes as you review. Build a personal scouting report for every opponent.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon">🗓️</div>
-          <h3>Playing Patterns</h3>
-          <p>Discover when you play best. Day-of-week performance, monthly trends, streaks, and activity heat maps reveal your rhythm.</p>
-        </article>
-        <article class="feature">
-          <div class="feature-icon">🏆</div>
-          <h3>Skill Tier Progression</h3>
-          <p>Benchmark against industry-standard PR tiers: World Class, Grandmaster, Expert, Advanced, Intermediate, Beginner. Know exactly where you stand.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section id="how">
-    <div class="container">
-      <div class="section-eyebrow">Three steps</div>
-      <h2>Online or over-the-board — every match counts</h2>
-      <p class="section-sub">Whether you're grinding online or rolling dice across a real board, BackgammonStats captures every match and turns it into insight.</p>
-      <div class="steps">
-        <article class="step">
-          <div class="step-num">1</div>
-          <h3>Upload all your match files</h3>
-          <p>Drag and drop match files from any platform, or live-transcribed games. Your entire history — online and over-the-board — lives in one searchable library.</p>
-        </article>
-        <article class="step">
-          <div class="step-num">2</div>
-          <h3>Explore your data</h3>
-          <p>Every match — online or live — flows into one unified dashboard. Filter by site, opponent, match length, or venue, and compare how your game holds up across formats.</p>
-        </article>
-        <article class="step">
-          <div class="step-num">3</div>
-          <h3>Level up your game</h3>
-          <p>Track PR trends, prep for rivals you've faced across a table or a screen, and turn every match — wherever it's played — into your next edge.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Audience -->
-  <section id="players">
-    <div class="container">
-      <div class="section-eyebrow">Made for players like you</div>
-      <h2>Whatever your game</h2>
-      <p class="section-sub">Whether you're grinding the online ladder or preparing for a major, BackgammonStats scales to your ambition.</p>
-      <div class="audience">
-        <article class="audience-card">
-          <div class="audience-icon">🏆</div>
-          <h4>Tournament Players</h4>
-          <p>Scout opponents before the match. Track your performance under pressure.</p>
-        </article>
-        <article class="audience-card">
-          <div class="audience-icon">💻</div>
-          <h4>Online Grinders</h4>
-          <p>Keep your PR trending down. Identify leaks in your game before they cost you.</p>
-        </article>
-        <article class="audience-card">
-          <div class="audience-icon">🎓</div>
-          <h4>Coaches & Students</h4>
-          <p>Review sessions together. Surface patterns and track improvement over time.</p>
-        </article>
-        <article class="audience-card">
-          <div class="audience-icon">🎲</div>
-          <h4>Improving Amateurs</h4>
-          <p>Celebrate your progress. See your journey from Beginner to Advanced and beyond.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- Signup Form -->
-  <section id="signup">
-    <div class="container">
-      <div class="final-cta">
-        <div class="section-eyebrow">Join the waitlist</div>
-        <h2 id="signup-heading">Sign Up for Updates</h2>
-        <p>Be the first to know when new features launch. Tell us a bit about how you play.</p>
-        <form class="signup-form" onsubmit="handleSignup(event)" aria-labelledby="signup-heading">
-          <div class="form-row">
-            <label for="su-name">Full Name</label>
-            <input id="su-name" type="text" name="fullName" required placeholder="Jane Doe" autocomplete="name" />
-          </div>
-          <div class="form-row">
-            <label for="su-email">Email</label>
-            <input id="su-email" type="email" name="email" required placeholder="you@example.com" autocomplete="email" />
-          </div>
-          <fieldset class="form-row fieldset-row">
-            <legend class="form-label">Which sites do you play on?</legend>
-            <div class="checkbox-grid" role="group" aria-label="Sites you play on">
-              <label class="cb"><input type="checkbox" name="sites" value="Backgammon Heroes" /> Backgammon Heroes</label>
-              <label class="cb"><input type="checkbox" name="sites" value="Galaxy" /> Galaxy</label>
-              <label class="cb"><input type="checkbox" name="sites" value="XG" /> XG</label>
-              <label class="cb"><input type="checkbox" name="sites" value="Transcribe Live Matches" /> Transcribe Live Matches</label>
-              <label class="cb"><input type="checkbox" name="sites" value="Other" /> Other</label>
-            </div>
-          </fieldset>
-          <button type="submit" class="btn btn-primary btn-lg">Sign Up for Updates →</button>
-          <div class="form-success" id="formSuccess" role="status" aria-live="polite">Thanks! We'll be in touch soon.</div>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  </main>
-
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <a href="#" class="logo" aria-label="BackgammonStats home">
-          <svg viewBox="0 0 32 32">
-            <defs>
-              <linearGradient id="footGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#6366f1" />
-                <stop offset="100%" stop-color="#a855f7" />
-              </linearGradient>
-            </defs>
-            <circle cx="16" cy="6" r="5" fill="url(#footGrad)" />
-            <circle cx="16" cy="16" r="5" fill="url(#footGrad)" opacity="0.85" />
-            <circle cx="16" cy="26" r="5" fill="url(#footGrad)" opacity="0.7" />
-          </svg>
-          BackgammonStats
-        </a>
-        <div class="footer-copy">© 2026 BackgammonStats · Built for players, by players</div>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    // Supabase waitlist endpoint (public anon key — RLS enforces insert-only)
-    const SUPABASE_URL = 'https://srrzdtmmezexzbfcfaws.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycnpkdG1tZXpleHpiZmNmYXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzI5NjcsImV4cCI6MjA5MDkwODk2N30.rbuPz_CoZoDhgW37XqAbAdLVeWLAv7250uOGQR4WUqM';
-
-    async function handleSignup(e) {
-      e.preventDefault();
-      const form = e.target;
-      const btn = form.querySelector('button[type="submit"]');
-      const successEl = document.getElementById('formSuccess');
-
-      const payload = {
-        full_name: form.fullName.value.trim(),
-        email: form.email.value.trim().toLowerCase(),
-        sites: Array.from(form.querySelectorAll('input[name="sites"]:checked')).map(i => i.value),
-      };
-
-      btn.disabled = true;
-      const originalLabel = btn.textContent;
-      btn.textContent = 'Submitting…';
-
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist_signups`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-
-        successEl.textContent = "Thanks! You're on the waitlist — we'll be in touch soon.";
-        successEl.classList.add('show');
-        successEl.classList.remove('error');
-        form.reset();
-      } catch (err) {
-        console.error('Signup failed:', err);
-        successEl.textContent = "Something went wrong. Please try again or email us directly.";
-        successEl.classList.add('show', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = originalLabel;
-      }
-    }
-
-    // Generate activity heatmap cells
-    const heatmap = document.getElementById('heatmap');
-    if (heatmap) {
-      const colors = [
-        '#f1f5f9', // empty
-        '#fca5a5', // low win rate
-        '#fde68a', // mid
-        '#86efac', // good
-        '#22c55e', // great
-      ];
-      // 26 weeks × 7 days = 182 cells, but we'll do 26 × 5 = 130 for a cleaner grid
-      for (let i = 0; i < 130; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'heat-cell';
-        // Weighted random for a realistic-looking heatmap
-        const r = Math.random();
-        let colorIdx;
-        if (r < 0.35) colorIdx = 0;
-        else if (r < 0.5) colorIdx = 1;
-        else if (r < 0.7) colorIdx = 2;
-        else if (r < 0.88) colorIdx = 3;
-        else colorIdx = 4;
-        cell.style.background = colors[colorIdx];
-        heatmap.appendChild(cell);
-      }
-    }
-  </script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BackgammonStats — track your backgammon matches in one place</title>
+<meta name="description" content="Upload Backgammon Studio, Galaxy, XG or GNU match files. Every match is analyzed by gnubg in minutes — replay every decision, compare candidates, scout opponents. Join the waitlist.">
+<meta property="og:title" content="BackgammonStats — track your matches in one place">
+<meta property="og:description" content="Automatic gnubg analysis of every match, a move-by-move position viewer and opponent scouting. Join the waitlist.">
+<link rel="canonical" href="https://backgammonstats.com/">
+<meta property="og:type" content="website"><meta property="og:url" content="https://backgammonstats.com/"><meta property="og:site_name" content="BackgammonStats">
+<meta property="og:image" content="https://backgammonstats.com/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A sample backgammon position: the best move in green, the move played in red, marked BLUNDER −0.287">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="BackgammonStats — track your matches in one place">
+<meta name="twitter:description" content="Automatic gnubg analysis of every match, a move-by-move position viewer and opponent scouting. Join the waitlist.">
+<meta name="twitter:image" content="https://backgammonstats.com/og.png">
+<meta name="theme-color" content="#fafafa">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2309090b'/%3E%3Ccircle cx='11' cy='11' r='3' fill='%23fafafa'/%3E%3Ccircle cx='21' cy='21' r='3' fill='%23fafafa'/%3E%3Ccircle cx='21' cy='11' r='3' fill='%233b6cf6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>body{margin:0;background:#fafafa}</style></head><body><style>
+:root{--bg:#fafafa;--surf:#fff;--alt:#f4f4f5;--bd:#e8e8ec;--bd2:#dcdce2;--div:#f0f0f3;--tx:#09090b;--mu:#52525b;--dim:#6b6b75;
+--ac:#2f5ee8;--acs:#2448c8;--acl:#3b6cf6;--acsoft:rgba(59,108,246,.09);--win:#10b981;--wint:#047857;--winsoft:rgba(16,185,129,.12);
+--loss:#f43f5e;--losst:#be123c;--losssoft:rgba(244,63,94,.10);--warn:#f59e0b;--warnt:#a16207;--warnsoft:rgba(234,179,8,.14);
+--sh:0 1px 2px rgba(9,9,11,.04),0 1px 1px rgba(9,9,11,.03);--pop:0 12px 32px rgba(9,9,11,.12);
+--sans:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+*{box-sizing:border-box}
+.hp{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+.hp a{color:var(--acs);text-decoration:none}.hp a.btn{color:#fff}.hp a.btn.sec{color:var(--tx)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+.mono{font-family:var(--mono)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:4px 10px;border-radius:999px}
+.pill.ac{background:var(--acsoft);color:var(--acs)}.pill.loss{background:var(--losssoft);color:var(--losst)}.pill.win{background:var(--winsoft);color:var(--wint)}.pill.mu{background:var(--alt);color:var(--mu)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--ac);background:var(--ac);color:#fff;font:inherit;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn.sm{height:36px;padding:0 14px;font-size:14px}
+.btn.sec{background:#fff;color:var(--tx);border-color:var(--bd2)}
+.btn:focus-visible,.inp:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(59,108,246,.35)}
+.card{background:var(--surf);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--sh)}
+.inp{height:44px;width:100%;padding:0 14px;border-radius:10px;border:1px solid var(--bd2);background:#fff;font:inherit;font-size:15px;color:var(--tx)}
+.inp::placeholder{color:var(--dim)}
+.lbl{display:block;font-size:13px;font-weight:500;margin-bottom:6px}
+.lbl .opt{color:var(--dim);font-weight:400}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--acs)}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.03em}
+/* nav */
+.nav{position:sticky;top:0;z-index:5;background:rgba(250,250,250,.85);backdrop-filter:saturate(160%) blur(12px);border-bottom:1px solid var(--bd)}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px;color:var(--tx)!important;letter-spacing:-.02em}
+.nav .links{display:flex;gap:24px;margin-left:auto;font-size:14px}.nav .links a{color:var(--mu)}
+/* hero */
+.hero{padding:64px 0 56px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:56px;align-items:center}
+.hero h1{font-size:56px;line-height:1.04;letter-spacing:-.04em;margin:18px 0 18px}
+.hero .lead{font-size:18px;color:var(--mu);max-width:520px;margin:0 0 28px}
+.hform{display:flex;gap:8px;max-width:500px}
+.hform .inp{flex:1}
+.fine{font-size:13px;color:var(--dim);margin-top:12px;display:flex;gap:6px;align-items:center}
+.viz{position:relative;padding:28px 0 150px 24px}
+.viz .boardcard{padding:14px;position:relative}
+.viz .strip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--mu);padding:0 4px 8px}
+.viz .strip b{color:var(--tx);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.float{position:absolute;background:#fff;border:1px solid var(--bd);border-radius:12px;box-shadow:var(--pop)}
+.verdict{left:-8px;top:0;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.verdict .eq{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--losst)}
+.cands{right:-20px;bottom:0;width:330px;padding:12px 12px 10px}
+.cands h4{margin:0 0 6px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) 56px;gap:8px;align-items:center;height:28px;padding:0 8px;border-radius:7px;font-family:var(--mono);font-size:13px;font-weight:600}
+.crow .l{font-size:12px;text-align:right}
+.crow.best{box-shadow:inset 3px 0 0 var(--win)}.crow.you{box-shadow:inset 3px 0 0 var(--loss),inset 0 0 0 1px var(--bd2)}
+.tag{font-family:var(--sans);font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 6px;border-radius:4px;margin-left:6px}
+.tag.b{background:var(--winsoft);color:var(--wint)}.tag.y{background:var(--loss);color:#fff}
+.wbar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:#e2e7ef;margin-top:8px}
+.cmp{font-size:12px;color:var(--mu);margin-top:6px;font-family:var(--sans)}
+.cmp b{color:var(--losst)}
+.sample{position:absolute;right:0;top:4px;font-size:11px;color:var(--dim)}
+/* sources */
+.sources{border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:#fff}
+.sources .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:18px;padding-bottom:18px;font-size:14px}
+.src{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--bd);background:var(--bg);font-weight:500;font-size:13.5px}
+.src .mono{font-size:11.5px;color:var(--dim)}
+/* sections */
+.sec{padding:64px 0}
+.sec-h{max-width:640px;margin-bottom:36px}
+.sec-h h2{font-size:36px;line-height:1.1;margin:10px 0 12px}
+.sec-h p{color:var(--mu);font-size:17px;margin:0}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.step{padding:20px}
+.step .n{font-family:var(--mono);font-size:12px;color:var(--dim)}
+.step h3{font-size:18px;margin:6px 0 6px}
+.step p{color:var(--mu);font-size:14px;margin:0 0 16px}
+.mini{background:var(--bg);border:1px solid var(--div);border-radius:10px;padding:10px;font-size:12.5px}
+.mrow{display:flex;align-items:center;gap:8px;height:28px}
+.mrow .f{font-family:var(--mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.ok{color:var(--wint);display:flex}
+.prog{height:6px;border-radius:3px;background:var(--alt);overflow:hidden;margin:8px 0 6px}.prog i{display:block;height:100%;width:44%;background:var(--ac)}
+.sq{display:inline-block;width:8px;height:8px;border-radius:1.5px;background:var(--loss)}.ci{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.loss{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--losst);margin-left:auto}.loss.e{color:var(--warnt)}
+/* features */
+.feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.feat{padding:22px;display:flex;flex-direction:column}
+.feat h3{font-size:20px;margin:8px 0 6px}
+.feat > p{color:var(--mu);font-size:14px;margin:0 0 16px}
+.feat ul,
+.feat li,.pvc li{display:flex;gap:8px;align-items:flex-start;padding:3px 0}.feat li span,.pvc li span{color:var(--ac);display:flex;margin-top:3px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--alt);border-radius:10px;padding:8px 10px}
+.tile .k{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim)}
+.tile .v{font-family:var(--mono);font-size:18px;font-weight:700;margin-top:2px}
+.tile .s{font-size:11px;color:var(--dim)}
+.brief{background:#f5f7ff;border:1px solid #dbe4ff;border-radius:10px;padding:12px;font-size:13px;line-height:1.5}
+.brief .h{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--acs);margin-bottom:4px}
+.tier{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:10px}
+.labelrow{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:4px}
+/* who */
+.who{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:40px}
+.who div{border-top:2px solid var(--tx);padding-top:12px}
+.who b{display:block;font-size:15px;margin-bottom:4px}.who span{font-size:13.5px;color:var(--mu)}
+/* faq */
+.faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 40px}
+.q{border-top:1px solid var(--bd);padding:18px 0}
+.q h3{font-size:16px;letter-spacing:-.01em;margin-bottom:6px}.q p{margin:0;color:var(--mu);font-size:14.5px}
+/* cta */
+.cta{padding:64px 0 72px}
+.cta .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:56px;align-items:start}
+.cta h2{font-size:40px;line-height:1.08;margin:10px 0 14px}
+.cta .lead{color:var(--mu);font-size:17px;margin:0 0 20px}
+.bul{list-style:none;padding:0;margin:0;font-size:15px}.bul li{display:flex;gap:10px;padding:5px 0}.bul li span{color:var(--wint);display:flex;margin-top:3px}
+.fcard{padding:26px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--bd2);background:#fff;font-size:13.5px;color:var(--tx)}
+.chip.on{border-color:var(--ac);background:var(--acsoft);color:var(--acs);font-weight:600}
+.chip .bx{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--bd2);display:inline-flex;align-items:center;justify-content:center}
+.chip.on .bx{background:var(--ac);border-color:var(--ac);color:#fff}.chip .bx svg{display:none}.chip.on .bx svg{display:block}
+.err{color:var(--losst);font-size:13px;margin-top:6px;display:flex;gap:6px;align-items:center}
+.inp.bad{border-color:var(--loss);box-shadow:0 0 0 3px rgba(244,63,94,.12)}
+.done{padding:34px 30px;text-align:left}
+.done .tick{width:44px;height:44px;border-radius:50%;background:var(--winsoft);color:var(--wint);display:flex;align-items:center;justify-content:center}
+footer{border-top:1px solid var(--bd);padding:28px 0 40px;font-size:13.5px;color:var(--dim)}
+footer .wrap{display:flex;align-items:center;gap:16px}
+.sticky{display:none}
+/* ---------- responsive ---------- */
+@media (max-width:1100px){
+ .hero .wrap{grid-template-columns:1fr;gap:28px}.hero h1{font-size:48px}.viz{max-width:680px;width:100%;margin:0 auto}
+ .feats,.steps{grid-template-columns:1fr 1fr}.who{grid-template-columns:1fr 1fr}
+ .cta .wrap{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+ .wrap{padding:0 16px}
+ .nav .links{display:none}.nav .wrap{height:56px;gap:12px}.nav .btn{margin-left:auto}
+ .hero{padding:28px 0 24px}.hero h1{font-size:36px;margin:12px 0 12px}.hero .lead{font-size:16px;margin-bottom:20px}
+ .hform{flex-direction:column}.hform .inp{flex:none}.hform .btn{width:100%}
+ .src .mono{display:none}
+ .sample{position:static;display:block;text-align:right;margin-bottom:6px}.verdict{position:relative;left:auto;top:auto;margin:10px 0 0;width:auto;justify-content:flex-start;box-shadow:var(--sh)}
+ .viz{padding:0}.verdict{left:0;top:0}.cands{position:relative;right:auto;bottom:auto;width:auto;margin-top:8px;box-shadow:var(--sh)}
+ .viz .boardcard{padding:10px}.sample{top:-2px}
+ .sources .wrap{gap:8px}.src{font-size:13px;padding:5px 10px}
+ .sec{padding:48px 0}.sec-h h2{font-size:28px}.sec-h p{font-size:15.5px}
+ .steps,.feats,.who,.faq,.fgrid{grid-template-columns:1fr}
+ .cta{padding:48px 0 96px}.cta h2{font-size:30px}.fcard{padding:18px}
+ footer .wrap{flex-direction:column;align-items:flex-start;gap:8px}
+ .sticky{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:6;padding:10px 16px 14px;background:rgba(250,250,250,.94);backdrop-filter:blur(10px);border-top:1px solid var(--bd)}
+ .sticky .btn{width:100%}
+}
+
+.hero2{position:relative;overflow:hidden;background:#eef3ff;border-bottom:1px solid #dbe4ff}
+.hero2 .bgpts{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero2 .wrap{position:relative}
+.hero2 .top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:56px;align-items:center;padding:56px 0 36px}
+.hero2 h1{font-size:58px;line-height:1.03;letter-spacing:-.04em;margin:18px 0 16px}
+.hero2 h1 em{font-style:normal;color:var(--ac)}
+.hero2 .lead{font-size:18px;color:var(--mu);max-width:470px;margin:0 0 26px}
+.hero2 .viz{padding:28px 0 120px 24px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 0 48px}
+.kpi{padding:16px 16px 12px;text-align:center;overflow:hidden}
+.kpi .k{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--dim)}
+.kpi .v{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.1;margin:4px 0 2px;letter-spacing:-.02em}
+.kpi .s{font-size:12px;color:var(--mu);display:flex;justify-content:center;gap:6px}
+.kpi svg{display:block;margin:10px -16px -12px;width:calc(100% + 32px)}
+.samp{font-size:11px;color:var(--dim);text-align:right;margin:-36px 0 18px}
+/* match tables */
+.mt{padding:72px 0 64px;background:#fff}
+.sec-h.c{text-align:center;margin:0 auto 32px}
+.mlist{padding:0;overflow:hidden;margin-bottom:20px}
+.mlist .hd{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--bd)}
+.mlist .hd b{font-size:15px}
+table.ml{width:100%;border-collapse:collapse;font-size:14px}
+.ml th{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);text-align:left;padding:9px 12px;background:var(--bg);border-bottom:1px solid var(--bd)}
+.ml td{padding:0 12px;height:46px;border-bottom:1px solid var(--div)}
+.ml tr:last-child td{border-bottom:0}
+.ml .r{text-align:right}.ml .mono{font-size:13.5px}
+.ml tr.sel td{background:#f5f8ff}
+.av{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;margin-right:8px;vertical-align:middle}
+.heat{display:inline-block;min-width:52px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;padding:4px 8px;border-radius:7px}
+.h-g{background:rgba(16,185,129,.16);color:#047857}.h-a{background:rgba(245,158,11,.18);color:#a16207}.h-r{background:rgba(244,63,94,.14);color:#be123c}
+.diff{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.diff .bar{width:90px;height:8px;border-radius:4px;background:var(--alt);position:relative}
+.diff .bar i{position:absolute;top:0;bottom:0;border-radius:4px}
+.diff .bar:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:var(--bd2)}
+.rep{padding:22px}
+.rep .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rep .head h3{font-size:26px;letter-spacing:-.03em}
+.rep .meta{font-size:13px;color:var(--mu)}
+.sum{font-size:15px;margin:14px 0 16px}
+.glance{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.gt{background:var(--alt);border-radius:12px;padding:10px 12px}
+.gt .k{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between}
+.gt .k span{text-transform:none;letter-spacing:0;font-weight:500}
+.gt .row{display:flex;align-items:baseline;justify-content:space-between;margin-top:4px}
+.gt .a{font-family:var(--mono);font-size:24px;font-weight:700}.gt .b{font-family:var(--mono);font-size:24px;font-weight:700}
+.gt .vs{font-size:11px;color:var(--dim)}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.gbg{display:grid;grid-template-columns:150px repeat(9,minmax(0,1fr)) 92px;gap:6px;align-items:center;min-width:900px;font-size:13px}
+.gbg .lab{font-weight:600;font-size:13px}
+.gbg .lab span{display:block;font-size:11px;color:var(--dim);font-weight:400}
+.gbg .c{text-align:center;font-family:var(--mono);font-size:13px;font-weight:600;padding:8px 0;border-radius:8px}
+.gtile{border-radius:9px;height:54px;display:flex;flex-direction:column;justify-content:space-between;padding:5px 8px;font-family:var(--mono);font-weight:700;position:relative}
+.gtile .g{font-size:10.5px;font-weight:600;font-family:var(--sans)}
+.gtile .p{font-size:16px;text-align:center}
+.gtile.w{background:#10b981;color:#fff}.gtile.l{background:var(--alt);color:var(--mu);border:1px solid var(--bd)}
+.gtile .cb{position:absolute;right:5px;top:5px;font-size:9px;padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.3)}
+.gtile.l .cb{background:#fff;border:1px solid var(--bd2)}
+.gtile.tot{background:var(--winsoft);color:var(--wint);text-align:center;justify-content:center}
+.gbg .hr{grid-column:1/-1;height:1px;background:var(--div)}
+.pos{color:#047857}.neg{color:#be123c}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mu);margin-top:14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+/* waitlist band */
+.band{background:#2f5ee8;color:#fff;padding:64px 0;position:relative;overflow:hidden}
+.band .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:56px;align-items:center;position:relative}
+.band h2{font-size:42px;line-height:1.06;margin:12px 0 14px;color:#fff}
+.band .lead{font-size:17px;color:rgba(255,255,255,.85);margin:0 0 22px}
+.band .pill{background:rgba(255,255,255,.16);color:#fff}
+.band .bul li{color:#fff}.band .bul li span{color:#a7f3d0}
+.band .fcard{color:var(--tx);box-shadow:0 20px 50px rgba(9,9,11,.25)}
+.band.light{background:#eef3ff;color:var(--tx);border-top:1px solid #dbe4ff;border-bottom:1px solid #dbe4ff}
+.band.light h2{color:var(--tx)}.band.light .lead{color:var(--mu)}.band.light .bul li{color:var(--tx)}.band.light .bul li span{color:var(--wint)}
+.band.light .pill{background:#fff;color:var(--acs)}.band.light .fcard{box-shadow:0 12px 32px rgba(47,94,232,.16)}
+/* feature visuals */
+.fv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.fvc{padding:18px;display:flex;flex-direction:column;gap:12px}
+.fvc h3{font-size:19px}
+.fvc p{margin:-6px 0 0;color:var(--mu);font-size:14px}
+.ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.vbox{background:var(--bg);border:1px solid var(--div);border-radius:12px;padding:12px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.cal{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
+.cal i{aspect-ratio:1;border-radius:3px;background:#eceef2}
+.tierb{display:grid;grid-template-columns:90px 1fr 26px;gap:8px;align-items:center;font-size:12px;height:22px}
+.tierb .t{height:10px;border-radius:5px;background:var(--alt);overflow:hidden}.tierb .t i{display:block;height:100%;border-radius:5px}
+/* how compact */
+.how2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.hs{display:flex;gap:14px;align-items:flex-start;padding:18px}
+.hs .n{flex:none;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--mono);font-weight:700}
+.hs h3{font-size:17px;margin:2px 0 4px}.hs p{margin:0;font-size:14px;color:var(--mu)}
+.srcrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+/* faq collapsed */
+.faq2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.faq2 details{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px 16px}
+.faq2 summary{font-weight:600;font-size:15px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq2 summary::-webkit-details-marker{display:none}
+.faq2 summary:after{content:"+";font-size:20px;color:var(--ac);font-weight:400}
+.faq2 details[open] summary:after{content:"−"}
+.faq2 details p{margin:8px 0 0;color:var(--mu);font-size:14px}
+@media (max-width:1100px){
+ .hero2 .top{grid-template-columns:1fr;gap:20px}.hero2 .viz{max-width:680px;width:100%;margin:0 auto}
+ .kpis{grid-template-columns:1fr 1fr}.glance{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .band .wrap{grid-template-columns:1fr;gap:28px}.fv,.how2{grid-template-columns:1fr 1fr}
+}
+@media (max-width:640px){
+ .hero2 .top{padding:28px 0 20px}.hero2 h1{font-size:38px;margin:12px 0 12px}.hero2 .lead{font-size:16px;margin-bottom:18px}
+ .hero2 .viz{padding:0}
+ .kpis{gap:10px;padding-bottom:36px}.kpi{padding:12px 10px 10px}.kpi .v{font-size:26px}.kpi .s{font-size:11px}.kpi svg{margin:8px -10px -10px;width:calc(100% + 20px)}
+ .samp{margin:-26px 0 12px}
+ .mt{padding:48px 0}.rep{padding:14px}.rep .head h3{font-size:21px}.glance{grid-template-columns:1fr 1fr}.glance .gt:last-child{display:none}
+ .gt .a,.gt .b{font-size:20px}
+ .gbg{grid-template-columns:92px repeat(9,58px) 72px;min-width:0;width:max-content}.gbg .lab{font-size:12px}
+ .mlist .hd{flex-wrap:wrap;gap:6px}.mlist .hd>span:last-child{margin-left:0;width:100%}
+ .ml .hm{display:none}.ml td,.ml th{padding-left:8px;padding-right:8px}.av{display:none}
+ .band{padding:48px 0}.band h2{font-size:32px}
+ .fv,.how2,.faq2{grid-template-columns:1fr}
+}
+
+.pdfsec{padding:72px 0;background:#fff;border-bottom:1px solid var(--bd)}
+.pdfsec .wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:56px;align-items:center}
+.pdfsec .wrap>.pdfstack{order:-1}
+.pdfsec h2{font-size:38px;line-height:1.08;margin:10px 0 14px}
+.pdfsec .lead{font-size:17px;color:var(--mu);margin:0 0 20px}
+.pdfsec .bul li span{color:var(--ac)}
+.fchip{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding:10px 14px 10px 10px;border:1px solid var(--bd);border-radius:12px;background:var(--bg)}
+.fchip .ico{width:36px;height:40px;border-radius:6px;background:#fee2e2;color:#be123c;font-size:10px;font-weight:700;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-family:var(--mono)}
+.fchip b{display:block;font-size:14px}.fchip span{font-size:12.5px;color:var(--dim)}
+.pdfstack{position:relative;aspect-ratio:1.45/1}
+.pg{position:absolute;width:47%;filter:drop-shadow(0 18px 30px rgba(9,9,11,.14))}
+.pg.p3{right:0;top:2%;transform:rotate(5deg)}
+.pg.p2{left:27%;top:6%;transform:rotate(1.5deg)}
+.pg.p1{left:0;top:4%;transform:rotate(-4deg)}
+.pdfstack .dl{position:absolute;left:30%;bottom:-2%;z-index:3;box-shadow:0 12px 28px rgba(47,94,232,.35)}
+@media (max-width:1100px){.pdfsec .wrap{grid-template-columns:1fr;gap:32px}.pdfsec .wrap>.pdfstack{order:0}}
+@media (max-width:640px){.pdfsec{padding:48px 0}.pdfsec h2{font-size:30px}.pdfstack{aspect-ratio:1.15/1}.pg{width:52%}.pg.p2{left:24%}.pdfstack .dl{left:50%;transform:translateX(-50%);bottom:-6%}.fchip{margin-top:16px}}
+</style><div class="hp"><header class="nav"><div class="wrap"><a class="brand" href="#"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#09090b"/><circle cx="11" cy="11" r="3" fill="#fafafa"/><circle cx="21" cy="21" r="3" fill="#fafafa"/><circle cx="21" cy="11" r="3" fill="#2f5ee8"/></svg>BackgammonStats</a><nav class="links" aria-label="Main"><a href="#features">Match reports</a><a href="#how">How it works</a></nav><a class="btn sm" href="#waitlist">Join the waitlist</a></div></header><main><section class="hero2"><svg class="bgpts" viewBox="0 0 2400 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M0 0 L50 260 L100 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M0 1000 L50 740 L100 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M100 0 L150 260 L200 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M100 1000 L150 740 L200 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M200 0 L250 260 L300 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M200 1000 L250 740 L300 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M300 0 L350 260 L400 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M300 1000 L350 740 L400 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M400 0 L450 260 L500 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M400 1000 L450 740 L500 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M500 0 L550 260 L600 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M500 1000 L550 740 L600 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M600 0 L650 260 L700 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M600 1000 L650 740 L700 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M700 0 L750 260 L800 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M700 1000 L750 740 L800 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M800 0 L850 260 L900 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M800 1000 L850 740 L900 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M900 0 L950 260 L1000 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M900 1000 L950 740 L1000 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1000 0 L1050 260 L1100 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1000 1000 L1050 740 L1100 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1100 0 L1150 260 L1200 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1100 1000 L1150 740 L1200 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1200 0 L1250 260 L1300 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1200 1000 L1250 740 L1300 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1300 0 L1350 260 L1400 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1300 1000 L1350 740 L1400 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1400 0 L1450 260 L1500 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1400 1000 L1450 740 L1500 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1500 0 L1550 260 L1600 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1500 1000 L1550 740 L1600 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1600 0 L1650 260 L1700 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1600 1000 L1650 740 L1700 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1700 0 L1750 260 L1800 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1700 1000 L1750 740 L1800 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1800 0 L1850 260 L1900 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M1800 1000 L1850 740 L1900 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1900 0 L1950 260 L2000 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M1900 1000 L1950 740 L2000 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M2000 0 L2050 260 L2100 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M2000 1000 L2050 740 L2100 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M2100 0 L2150 260 L2200 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M2100 1000 L2150 740 L2200 1000Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M2200 0 L2250 260 L2300 0Z" fill="#2f5ee8" fill-opacity=".07"/><path d="M2200 1000 L2250 740 L2300 1000Z" fill="#8f9db4" fill-opacity=".07"/><path d="M2300 0 L2350 260 L2400 0Z" fill="#8f9db4" fill-opacity=".07"/><path d="M2300 1000 L2350 740 L2400 1000Z" fill="#2f5ee8" fill-opacity=".07"/></svg><div class="wrap"><div class="top"><div><span class="pill ac" style="background:#fff">Private beta · waitlist open</span><h1><span style="white-space:nowrap">Track your matches</span><br>in <em>one place.</em></h1><p class="lead">Upload your Studio, Galaxy, XG or GNU files. Every match analyzed, every mistake found.</p><form class="hform" aria-label="Join the waitlist"><label for="he" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Email</label><input id="he" class="inp" type="email" placeholder="you@example.com" autocomplete="email" required><button class="btn" type="submit">Join the waitlist <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button></form></div><div class="viz"><span class="sample">Sample position</span><div class="card boardcard"><div class="strip"><span class="dot" style="background:#52525b"></span><b>ThePipCount</b>&nbsp;· 5/7<span style="margin-left:auto" class="mono">Pip 75</span></div><div style="aspect-ratio:512/432"><svg viewBox="0 0 512 432" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sample position: best move 6/2 6/1 in green, the played move 13/8/4 dashed red" style="display: block;"><rect x="0.5" y="0.5" width="479" height="431" fill="#e2e7ef" stroke="#d3dae5" stroke-width="1"></rect><rect x="10" y="28" width="216" height="376" fill="#f7f9fb"></rect><rect x="254" y="28" width="216" height="376" fill="#f7f9fb"></rect><rect x="226" y="28" width="28" height="376" fill="#e2e7ef" stroke="#d3dae5" stroke-width="1"></rect><path d="M 435 403 L 469 403 L 452 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 399 403 L 433 403 L 416 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 363 403 L 397 403 L 380 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 327 403 L 361 403 L 344 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 291 403 L 325 403 L 308 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 255 403 L 289 403 L 272 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 191 403 L 225 403 L 208 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 155 403 L 189 403 L 172 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 119 403 L 153 403 L 136 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 83 403 L 117 403 L 100 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 47 403 L 81 403 L 64 245.08 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 11 403 L 45 403 L 28 245.08 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 11 29 L 45 29 L 28 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 47 29 L 81 29 L 64 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 83 29 L 117 29 L 100 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 119 29 L 153 29 L 136 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 155 29 L 189 29 L 172 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 191 29 L 225 29 L 208 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 255 29 L 289 29 L 272 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 291 29 L 325 29 L 308 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 327 29 L 361 29 L 344 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 363 29 L 397 29 L 380 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><path d="M 399 29 L 433 29 L 416 186.92 Z" fill="#e8edf4" stroke="#cfd7e3" stroke-width="1"></path><path d="M 435 29 L 469 29 L 452 186.92 Z" fill="#8f9db4" stroke="none" stroke-width="0"></path><g><rect x="2" y="203" width="26" height="26" rx="3.9" fill="#ffffff" stroke="#d3dae5" stroke-width="0.8"></rect><text x="15" y="216.5" font-size="10.92" font-weight="600" fill="#52525b" text-anchor="middle" dominant-baseline="central">64</text></g><text x="452" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">1</text><text x="416" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">2</text><text x="380" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">3</text><text x="344" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">4</text><text x="308" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">5</text><text x="272" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">6</text><text x="208" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">7</text><text x="172" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">8</text><text x="136" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">9</text><text x="100" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">10</text><text x="64" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">11</text><text x="28" y="414" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">12</text><text x="28" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">13</text><text x="64" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">14</text><text x="100" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">15</text><text x="136" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">16</text><text x="172" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">17</text><text x="208" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">18</text><text x="272" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">19</text><text x="308" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">20</text><text x="344" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">21</text><text x="380" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">22</text><text x="416" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">23</text><text x="452" y="25" font-family="'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600" fill="#52525b" text-anchor="middle">24</text><circle cx="28" cy="45" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="28" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="28" cy="78" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="28" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="272" cy="387" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="272" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="272" cy="354" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="272" cy="354" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="308" cy="387" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="308" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="308" cy="354" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="308" cy="354" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="344" cy="387" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="344" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="344" cy="354" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="344" cy="354" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="344" cy="321" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="344" cy="321" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="380" cy="387" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="380" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="380" cy="354" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="380" cy="354" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="380" cy="321" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="380" cy="321" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="380" cy="288" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="380" cy="288" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="380" cy="255" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="380" cy="255" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="416" cy="387" r="16.5" fill="#2f5ee8" stroke="#2448c8" stroke-width="1"></circle><circle cx="416" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1.2"></circle><circle cx="272" cy="45" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="272" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="272" cy="78" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="272" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="272" cy="111" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="272" cy="111" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="308" cy="45" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="308" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="308" cy="78" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="308" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="380" cy="45" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="380" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="380" cy="78" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="380" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="416" cy="45" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="416" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="416" cy="78" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="416" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="416" cy="111" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="416" cy="111" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="452" cy="45" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="452" cy="45" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="452" cy="78" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="452" cy="78" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="452" cy="111" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="452" cy="111" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="136" cy="387" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="136" cy="387" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><circle cx="136" cy="354" r="16.5" fill="#52525b" stroke="#27272a" stroke-width="1"></circle><circle cx="136" cy="354" r="12.0" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1.2"></circle><g><rect x="326" y="200.0" width="32" height="32" rx="6" fill="#ffffff" stroke="#c9d2df" stroke-width="1"></rect><circle cx="334.40" cy="208.40" r="3" fill="#2448c8"></circle><circle cx="349.60" cy="208.40" r="3" fill="#2448c8"></circle><circle cx="342.00" cy="216.00" r="3" fill="#2448c8"></circle><circle cx="334.40" cy="223.60" r="3" fill="#2448c8"></circle><circle cx="349.60" cy="223.60" r="3" fill="#2448c8"></circle></g><g><rect x="364" y="200.0" width="32" height="32" rx="6" fill="#ffffff" stroke="#c9d2df" stroke-width="1"></rect><circle cx="372.40" cy="208.40" r="3" fill="#2448c8"></circle><circle cx="387.60" cy="208.40" r="3" fill="#2448c8"></circle><circle cx="372.40" cy="223.60" r="3" fill="#2448c8"></circle><circle cx="387.60" cy="223.60" r="3" fill="#2448c8"></circle></g><defs><marker id="n0010b981" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"></path></marker></defs><path d="M 272 354 L 416 354" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"></path><path d="M 272 354 L 416 354" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="none" stroke-linecap="round" marker-end="url(#n0010b981)"></path><defs><marker id="n0110b981" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"></path></marker></defs><path d="M 272 387 L 452 387" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"></path><path d="M 272 387 L 452 387" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="none" stroke-linecap="round" marker-end="url(#n0110b981)"></path><defs><marker id="n10e11d48" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#e11d48"></path></marker></defs><path d="M 28 78 L 172 387" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"></path><path d="M 28 78 L 172 387" fill="none" stroke="#e11d48" stroke-width="3" stroke-dasharray="7 5" stroke-linecap="round" marker-end="url(#n10e11d48)"></path><defs><marker id="n11e11d48" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#e11d48"></path></marker></defs><path d="M 172 387 L 344 288" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"></path><path d="M 172 387 L 344 288" fill="none" stroke="#e11d48" stroke-width="3" stroke-dasharray="7 5" stroke-linecap="round" marker-end="url(#n11e11d48)"></path><rect x="478" y="0.5" width="33.5" height="431" fill="#e2e7ef" stroke="#d3dae5" stroke-width="1"></rect><rect x="470" y="0.5" width="10" height="431" fill="#e2e7ef"></rect><rect x="482" y="28" width="26" height="184" rx="4" fill="#f7f9fb" stroke="#d3dae5" stroke-width="1"></rect><rect x="482" y="220" width="26" height="184" rx="4" fill="#f7f9fb" stroke="#d3dae5" stroke-width="1"></rect><text x="495" y="14" font-size="9" font-weight="700" fill="#6b6b75" text-anchor="middle" letter-spacing="0.6">OFF</text><text x="495" y="392" font-size="11" font-weight="700" fill="#2448c8" text-anchor="middle">0</text><text x="495" y="46" font-size="11" font-weight="700" fill="#52525b" text-anchor="middle">0</text></svg></div><div class="strip" style="padding:8px 4px 0"><span class="dot" style="background:#2f5ee8"></span><b>You</b>&nbsp;· 2/7 · on roll<span style="margin-left:auto" class="mono">Pip 77</span></div></div><div class="float verdict"><span class="pill loss">Blunder</span><span class="eq">−0.287</span><span style="color:var(--mu)">+7.97 game PR</span></div><div class="float cands" role="figure" aria-label="Candidate moves"><h4>Candidates <span class="pill mu" style="padding:2px 6px;font-size:9px">gnubg</span></h4><div class="crow best"><span>6/2 6/1<span class="tag b">BEST</span></span><span class="l" style="color:var(--dim)">—</span></div><div class="crow"><span>6/1 5/1</span><span class="l" style="color:var(--losst)">−0.162</span></div><div class="crow you"><span>13/8/4<span class="tag y">YOU</span></span><span class="l" style="color:var(--losst)">−0.287</span></div><div class="wbar" aria-hidden="true"><i style="width:46.6%;background:var(--ac)"></i><i style="width:2px;background:#fff"></i><i style="flex:1;background:#52525b"></i></div><div class="cmp">gives up <b>10.8% wins</b> vs best</div></div></div></div><div class="kpis" aria-label="Sample dashboard numbers"><div class="card kpi"><div class="k">Recent PR · last 10</div><div class="v" style="color:#2448c8">9.89</div><div class="s"><span class="pill ac" style="padding:1px 7px;font-size:9px">Intermediate</span><b style="color:#047857">▼ 3.94</b></div><svg viewBox="0 0 260 46" height="46" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 6.0 L26.0 11.0 L52.0 8.5 L78.0 17.7 L104.0 23.5 L130.0 19.4 L156.0 29.4 L182.0 32.7 L208.0 36.1 L234.0 39.4 L260.0 42.0 L260 46 L0 46Z" fill="#3b6cf6" fill-opacity=".14"/><path d="M0.0 6.0 L26.0 11.0 L52.0 8.5 L78.0 17.7 L104.0 23.5 L130.0 19.4 L156.0 29.4 L182.0 32.7 L208.0 36.1 L234.0 39.4 L260.0 42.0" fill="none" stroke="#3b6cf6" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg></div><div class="card kpi"><div class="k">Win rate</div><div class="v" style="color:#047857">58%</div><div class="s">22W – 16L <b style="color:#047857">↑ 6%</b></div><svg viewBox="0 0 260 46" height="46" preserveAspectRatio="none" aria-hidden="true"><path d="M0.0 42.0 L26.0 34.8 L52.0 38.4 L78.0 27.6 L104.0 31.2 L130.0 20.4 L156.0 16.8 L182.0 20.4 L208.0 13.2 L234.0 9.6 L260.0 6.0 L260 46 L0 46Z" fill="#10b981" fill-opacity=".14"/><path d="M0.0 42.0 L26.0 34.8 L52.0 38.4 L78.0 27.6 L104.0 31.2 L130.0 20.4 L156.0 16.8 L182.0 20.4 L208.0 13.2 L234.0 9.6 L260.0 6.0" fill="none" stroke="#10b981" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg></div><div class="card kpi"><div class="k">Luck / match</div><div class="v" style="color:#a16207">+0.12</div><div class="s">Roughly neutral</div><svg viewBox="0 0 264 46" height="46" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="264" y1="23" y2="23" stroke="#e4e4e7"/><rect x="4" y="14.0" width="16" height="9.0" rx="2" fill="#f59e0b"/><rect x="28" y="23.0" width="16" height="15.0" rx="2" fill="#d4d4d8"/><rect x="52" y="20.0" width="16" height="3.0" rx="2" fill="#f59e0b"/><rect x="76" y="5.0" width="16" height="18.0" rx="2" fill="#f59e0b"/><rect x="100" y="23.0" width="16" height="6.0" rx="2" fill="#d4d4d8"/><rect x="124" y="23.0" width="16" height="12.0" rx="2" fill="#d4d4d8"/><rect x="148" y="17.0" width="16" height="6.0" rx="2" fill="#f59e0b"/><rect x="172" y="8.0" width="16" height="15.0" rx="2" fill="#f59e0b"/><rect x="196" y="23.0" width="16" height="3.0" rx="2" fill="#d4d4d8"/><rect x="220" y="14.0" width="16" height="9.0" rx="2" fill="#f59e0b"/><rect x="244" y="19.4" width="16" height="3.6" rx="2" fill="#f59e0b"/></svg></div><div class="card kpi"><div class="k">Current streak</div><div class="v" style="color:#047857">5W</div><div class="s">Last 8 matches</div><div style="display:flex;gap:5px;height:46px;padding:10px 16px 12px;margin:0 -16px -12px" aria-hidden="true"><i style="flex:1;height:12px;border-radius:3px;background:#f43f5e;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i><i style="flex:1;height:12px;border-radius:3px;background:#f43f5e;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i><i style="flex:1;height:18px;border-radius:3px;background:#10b981;align-self:flex-end"></i></div></div></div><div class="samp">Sample data</div></div></section><section class="mt" id="features"><div class="wrap"><div class="sec-h c"><span class="eyebrow">Match reports</span><h2>Every match. Every game. Every point.</h2></div><div class="card mlist"><div class="hd"><b>Your matches</b><span class="pill mu">39 matches</span><span style="margin-left:auto;font-size:12px;color:var(--dim)">Sample data · invented opponents</span></div><table class="ml"><thead><tr><th>Date</th><th>Opponent</th><th class="hm">Match</th><th>Score</th><th>Result</th><th class="r">Your PR</th><th class="r hm">Their PR</th><th class="r hm">PR edge</th></tr></thead><tbody><tr class="sel"><td style="box-shadow:inset 4px 0 0 #10b981;color:var(--mu)">Oct 16</td><td><span class="av" style="background:#0ea5e9">T</span><b style="font-weight:600">ThePipCount</b></td><td class="hm" style="color:var(--mu)">7-pt</td><td class="mono" style="font-weight:600">7–6</td><td><span class="pill win">Won</span></td><td class="r"><span class="heat h-g">4.93</span></td><td class="r hm"><span class="heat h-r">14.11</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#047857">+9.18</span><span class="bar"><i style="left:50%;width:41px;background:#10b981"></i></span></div></td></tr><tr><td style="box-shadow:inset 4px 0 0 #f43f5e;color:var(--mu)">Oct 14</td><td><span class="av" style="background:#52525b">N</span><b style="font-weight:600">nightowl</b></td><td class="hm" style="color:var(--mu)">5-pt</td><td class="mono" style="font-weight:600">3–5</td><td><span class="pill loss">Lost</span></td><td class="r"><span class="heat h-a">11.20</span></td><td class="r hm"><span class="heat h-g">7.85</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#be123c">-3.35</span><span class="bar"><i style="right:50%;width:15px;background:#f43f5e"></i></span></div></td></tr><tr><td style="box-shadow:inset 4px 0 0 #10b981;color:var(--mu)">Oct 12</td><td><span class="av" style="background:#10b981">T</span><b style="font-weight:600">tidewater</b></td><td class="hm" style="color:var(--mu)">7-pt</td><td class="mono" style="font-weight:600">7–2</td><td><span class="pill win">Won</span></td><td class="r"><span class="heat h-g">6.41</span></td><td class="r hm"><span class="heat h-a">9.97</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#047857">+3.56</span><span class="bar"><i style="left:50%;width:16px;background:#10b981"></i></span></div></td></tr><tr><td style="box-shadow:inset 4px 0 0 #10b981;color:var(--mu)">Oct 9</td><td><span class="av" style="background:#f59e0b">K</span><b style="font-weight:600">kestrel</b></td><td class="hm" style="color:var(--mu)">9-pt</td><td class="mono" style="font-weight:600">9–7</td><td><span class="pill win">Won</span></td><td class="r"><span class="heat h-a">8.76</span></td><td class="r hm"><span class="heat h-a">12.30</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#047857">+3.54</span><span class="bar"><i style="left:50%;width:16px;background:#10b981"></i></span></div></td></tr><tr><td style="box-shadow:inset 4px 0 0 #f43f5e;color:var(--mu)">Oct 7</td><td><span class="av" style="background:#2f5ee8">B</span><b style="font-weight:600">bluefin</b></td><td class="hm" style="color:var(--mu)">5-pt</td><td class="mono" style="font-weight:600">4–5</td><td><span class="pill loss">Lost</span></td><td class="r"><span class="heat h-a">13.05</span></td><td class="r hm"><span class="heat h-a">10.42</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#be123c">-2.63</span><span class="bar"><i style="right:50%;width:12px;background:#f43f5e"></i></span></div></td></tr><tr><td style="box-shadow:inset 4px 0 0 #10b981;color:var(--mu)">Oct 3</td><td><span class="av" style="background:#52525b">N</span><b style="font-weight:600">nightowl</b></td><td class="hm" style="color:var(--mu)">7-pt</td><td class="mono" style="font-weight:600">7–4</td><td><span class="pill win">Won</span></td><td class="r"><span class="heat h-g">5.88</span></td><td class="r hm"><span class="heat h-a">10.13</span></td><td class="hm"><div class="diff"><span class="mono" style="font-size:12.5px;font-weight:600;color:#047857">+4.25</span><span class="bar"><i style="left:50%;width:19px;background:#10b981"></i></span></div></td></tr></tbody></table></div><div class="card rep" aria-label="Sample match report"><div class="head"><span style="display:flex"><span class="av" style="background:#2f5ee8;width:40px;height:40px;font-size:15px;margin:0">J</span><span class="av" style="background:#0ea5e9;width:40px;height:40px;font-size:15px;margin:0 0 0 -8px;box-shadow:0 0 0 3px #fff">T</span></span><div><h3>You vs ThePipCount <span class="mono">7–6</span> <span class="pill win" style="vertical-align:5px">Won</span></h3><div class="meta">Oct 16 · 7-point match · Backgammon Studio · analyzed by gnubg</div></div><span style="margin-left:auto;font-size:12px;color:var(--dim)">Sample match report</span></div><p class="sum">You out-played ThePipCount by <b style="color:#047857">9.18 PR</b> despite ThePipCount being the luckier side.</p><div class="glance"><div class="gt"><div class="k">PR<span>better: you</span></div><div class="row"><span class="a" style="color:#047857">4.93</span><span class="vs">vs</span><span class="b">14.11</span></div></div><div class="gt"><div class="k">Errors<span></span></div><div class="row"><span class="a" style="color:#047857">13</span><span class="vs">vs</span><span class="b">30</span></div></div><div class="gt"><div class="k">Blunders<span></span></div><div class="row"><span class="a" style="color:#047857">6</span><span class="vs">vs</span><span class="b">17</span></div></div><div class="gt"><div class="k">Luck<span>luckier: them</span></div><div class="row"><span class="a" style="color:var(--tx)">+2.78</span><span class="vs">vs</span><span class="b"><span style="color:#047857">+5.45</span></span></div></div><div class="gt"><div class="k">Decisions<span></span></div><div class="row"><span class="a" style="color:var(--tx)">146</span><span class="vs">vs</span><span class="b">158</span></div></div></div><div class="tscroll"><div class="gbg"><div class="lab">Game<span>points won</span></div><div class="gtile l"><span class="g">G1</span><span class=cb>×2</span><span class="p">+2</span></div><div class="gtile l"><span class="g">G2</span><span class=cb>×4</span><span class="p">+2</span></div><div class="gtile w"><span class="g">G3</span><span class=cb>×2</span><span class="p">+2</span></div><div class="gtile l"><span class="g">G4</span><span class="p">+1</span></div><div class="gtile w"><span class="g">G5</span><span class=cb>×2</span><span class="p">+2</span></div><div class="gtile l"><span class="g">G6</span><span class="p">+1</span></div><div class="gtile w"><span class="g">G7</span><span class="p">+1</span></div><div class="gtile w"><span class="g">G8</span><span class="p">+1</span></div><div class="gtile w"><span class="g">G9</span><span class="p">+1</span></div><div class="gtile tot"><span style="font-size:10px;font-family:var(--sans)">WON</span><span class="p">7–6</span></div><div class="hr"></div><div class="lab">Your PR</div><div class="c h-g">2.4</div><div class="c h-g">3.7</div><div class="c h-g">4.8</div><div class="c h-g">0.0</div><div class="c h-a">12.3</div><div class="c h-r">15.5</div><div class="c h-g">2.8</div><div class="c h-g">0.0</div><div class="c h-g">1.3</div><div class="c h-g" style="font-size:14px">4.93</div><div class="lab">ThePipCount’s PR</div><div class="c h-a">13.9</div><div class="c h-r">18.9</div><div class="c h-a">13.1</div><div class="c h-r">38.4</div><div class="c h-a">8.4</div><div class="c h-a">9.2</div><div class="c h-a">11.1</div><div class="c h-g">3.1</div><div class="c h-g">7.3</div><div class="c h-a" style="font-size:14px">14.11</div><div class="hr"></div><div class="lab">Your errors<span>errors · blunders</span></div><div class=c style=font-weight:500>2</div><div class=c style=font-weight:500>1 · 1bl</div><div class=c style=font-weight:500>1 · 1bl</div><div class=c style=font-weight:500>0</div><div class=c style=font-weight:500>4 · 2bl</div><div class=c style=font-weight:500>2 · 2bl</div><div class=c style=font-weight:500>2</div><div class=c style=font-weight:500>0</div><div class=c style=font-weight:500>1</div><div class="c">13 · 6bl</div><div class="lab">Your luck</div><div class="c neg">-0.66</div><div class="c pos">+0.23</div><div class="c neg">-0.21</div><div class="c pos">+0.38</div><div class="c pos">+1.14</div><div class="c pos">+0.80</div><div class="c pos">+0.44</div><div class="c">+0.00</div><div class="c pos">+0.68</div><div class="c pos">+2.78</div></div></div><div class="legend"><span><i style="background:#10b981"></i>You won</span><span><i style="background:var(--alt);border:1px solid var(--bd)"></i>ThePipCount won</span><span><i class="h-g" style="background:rgba(16,185,129,.3)"></i>PR under 8</span><span><i style="background:rgba(245,158,11,.4)"></i>8 – 14</span><span><i style="background:rgba(244,63,94,.35)"></i>14+</span><span><b class="mono" style="font-size:11px">×2</b> cube turned</span></div></div></div></section><section class="band light" id="waitlist"><svg class="bgpts" viewBox="0 0 2400 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><path d="M0 0 L50 230 L100 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M0 1000 L50 770 L100 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M100 0 L150 230 L200 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M100 1000 L150 770 L200 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M200 0 L250 230 L300 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M200 1000 L250 770 L300 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M300 0 L350 230 L400 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M300 1000 L350 770 L400 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M400 0 L450 230 L500 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M400 1000 L450 770 L500 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M500 0 L550 230 L600 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M500 1000 L550 770 L600 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M600 0 L650 230 L700 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M600 1000 L650 770 L700 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M700 0 L750 230 L800 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M700 1000 L750 770 L800 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M800 0 L850 230 L900 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M800 1000 L850 770 L900 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M900 0 L950 230 L1000 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M900 1000 L950 770 L1000 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1000 0 L1050 230 L1100 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1000 1000 L1050 770 L1100 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1100 0 L1150 230 L1200 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1100 1000 L1150 770 L1200 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1200 0 L1250 230 L1300 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1200 1000 L1250 770 L1300 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1300 0 L1350 230 L1400 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1300 1000 L1350 770 L1400 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1400 0 L1450 230 L1500 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1400 1000 L1450 770 L1500 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1500 0 L1550 230 L1600 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1500 1000 L1550 770 L1600 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1600 0 L1650 230 L1700 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1600 1000 L1650 770 L1700 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1700 0 L1750 230 L1800 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1700 1000 L1750 770 L1800 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1800 0 L1850 230 L1900 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M1800 1000 L1850 770 L1900 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1900 0 L1950 230 L2000 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M1900 1000 L1950 770 L2000 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M2000 0 L2050 230 L2100 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M2000 1000 L2050 770 L2100 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M2100 0 L2150 230 L2200 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M2100 1000 L2150 770 L2200 1000Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M2200 0 L2250 230 L2300 0Z" fill="#2f5ee8" fill-opacity=".06"/><path d="M2200 1000 L2250 770 L2300 1000Z" fill="#8f9db4" fill-opacity=".06"/><path d="M2300 0 L2350 230 L2400 0Z" fill="#8f9db4" fill-opacity=".06"/><path d="M2300 1000 L2350 770 L2400 1000Z" fill="#2f5ee8" fill-opacity=".06"/></svg><div class="wrap"><div><span class="pill">Waitlist</span><h2>Get your matches analyzed — first.</h2><p class="lead">We’re letting players in from the list in small groups.</p><ul class="bul"><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Every match analyzed automatically</li><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Reports, position viewer and scouting</li><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Your PR tracked against the skill tiers</li></ul></div><form class="card fcard" aria-label="Join the waitlist" novalidate><div class="fgrid"><div><label class="lbl" for="nm">Name <span class="opt">(optional)</span></label><input id="nm" class="inp" autocomplete="name" placeholder="Jay" ></div><div><label class="lbl" for="em">Email</label><input id="em" class="inp" type="email" autocomplete="email" placeholder="you@example.com" ></div></div><fieldset style="border:0;padding:0;margin:18px 0 0"><legend class="lbl">Where do you play? <span class="opt">(pick any)</span></legend><div class="chips"><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Backgammon Studio</span><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Backgammon Galaxy</span><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Extreme Gammon</span><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>GNU Backgammon</span><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Over the board</span><span class="chip" role="checkbox" aria-checked="false" tabindex="0"><span class="bx"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Other</span></div></fieldset><button class="btn" type="submit" style="width:100%;margin-top:22px">Join the waitlist <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button><p style="font-size:13px;color:var(--dim);margin:12px 0 0;display:flex;gap:6px;align-items:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>We’ll only email you about your BackgammonStats invite.</p></form></div></section><section class="pdfsec" id="reports"><div class="wrap"><div><span class="eyebrow">Download</span><h2>Take the report with you.</h2><p class="lead">Every match comes as a PDF to print, share or study.</p><ul class="bul"><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Summary, PR and the game-by-game scorecard</li><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Your six costliest decisions, with boards</li><li><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span>Every error and blunder in one table</li></ul></div><div class="pdfstack" aria-label="Sample match report PDF, three pages"><div class="pg p3"><svg viewBox="0 0 340 440" width="100%" role="img" aria-label="Report page 3: table of every error and blunder"><rect x="0.5" y="0.5" width="339" height="439" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="18" y="30" font-size="13" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Every error and blunder</text><text x="18" y="44" font-size="7" font-weight="400" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">13 decisions · for reviewing the match</text><rect x="18" y="54" width="304" height="14" fill="#f4f4f5"/><text x="24" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">GAME</text><text x="58" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">MOVE</text><text x="92" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">DICE</text><text x="128" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">PLAYED</text><text x="210" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BEST</text><text x="316" y="64" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="end" style="font-family:Geist,system-ui,sans-serif">COST</text><rect x="18" y="70" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="83" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">5</text><text x="62" y="83" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">12</text><text x="92" y="83" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">54</text><text x="128" y="83" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/8/4</text><text x="210" y="83" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6/2 6/1</text><text x="316" y="83" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.287</text><rect x="18" y="92" width="304" height="22" fill="#fafafa"/><rect x="18" y="92" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="105" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">2</text><text x="62" y="105" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="92" y="105" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">—</text><text x="128" y="105" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">no double</text><text x="210" y="105" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">double</text><text x="316" y="105" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.214</text><rect x="18" y="114" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="127" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="62" y="127" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">7</text><text x="92" y="127" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">62</text><text x="128" y="127" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">24/18 13/11</text><text x="210" y="127" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/5</text><text x="316" y="127" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.168</text><rect x="18" y="136" width="304" height="22" fill="#fafafa"/><rect x="18" y="136" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="149" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">1</text><text x="62" y="149" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">9</text><text x="92" y="149" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">—</text><text x="128" y="149" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">take</text><text x="210" y="149" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">pass</text><text x="316" y="149" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.131</text><rect x="18" y="158" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="171" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">2</text><text x="62" y="171" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">9</text><text x="92" y="171" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">31</text><text x="128" y="171" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">8/5 6/5</text><text x="210" y="171" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">24/23 13/10</text><text x="316" y="171" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.096</text><rect x="18" y="180" width="304" height="22" fill="#fafafa"/><rect x="18" y="180" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="193" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="62" y="193" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">15</text><text x="92" y="193" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">44</text><text x="128" y="193" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/5(2)</text><text x="210" y="193" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">8/4(2) 6/2(2)</text><text x="316" y="193" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.071</text><rect x="18" y="202" width="2.5" height="22" fill="#f43f5e"/><text x="28" y="215" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">5</text><text x="62" y="215" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">3</text><text x="92" y="215" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">65</text><text x="128" y="215" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">24/13</text><text x="210" y="215" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">24/18 13/8</text><text x="316" y="215" font-size="7" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.058</text><rect x="18" y="224" width="304" height="22" fill="#fafafa"/><rect x="18" y="224" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="237" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">3</text><text x="62" y="237" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">11</text><text x="92" y="237" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">21</text><text x="128" y="237" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/11 6/5</text><text x="210" y="237" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">24/21</text><text x="316" y="237" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.044</text><rect x="18" y="246" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="259" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="62" y="259" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">4</text><text x="92" y="259" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">52</text><text x="128" y="259" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/8 13/11</text><text x="210" y="259" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/11 6/1</text><text x="316" y="259" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.039</text><rect x="18" y="268" width="304" height="22" fill="#fafafa"/><rect x="18" y="268" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="281" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">1</text><text x="62" y="281" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">14</text><text x="92" y="281" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">33</text><text x="128" y="281" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">8/2(2)</text><text x="210" y="281" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/7(2)</text><text x="316" y="281" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.033</text><rect x="18" y="290" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="303" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">2</text><text x="62" y="303" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">18</text><text x="92" y="303" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">41</text><text x="128" y="303" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6/2 6/5</text><text x="210" y="303" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6/1</text><text x="316" y="303" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.028</text><rect x="18" y="312" width="304" height="22" fill="#fafafa"/><rect x="18" y="312" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="325" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">5</text><text x="62" y="325" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">20</text><text x="92" y="325" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">63</text><text x="128" y="325" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">9/3 6/3</text><text x="210" y="325" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">9/off</text><text x="316" y="325" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.024</text><rect x="18" y="334" width="2.5" height="22" fill="#f59e0b"/><text x="28" y="347" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">4</text><text x="62" y="347" font-size="7" font-weight="400" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="92" y="347" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">42</text><text x="128" y="347" font-size="7" font-weight="600" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">8/4 6/4</text><text x="210" y="347" font-size="7" font-weight="600" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">13/9 13/11</text><text x="316" y="347" font-size="7" font-weight="700" fill="#a16207" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.021</text><text x="322" y="428" text-anchor="end" font-size="7" fill="#a1a1aa" style="font-family:Geist,system-ui,sans-serif">BackgammonStats</text></svg></div><div class="pg p2"><svg viewBox="0 0 340 440" width="100%" role="img" aria-label="Report page 2: the six costliest decisions with boards"><rect x="0.5" y="0.5" width="339" height="439" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="18" y="30" font-size="13" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Your six costliest decisions</text><text x="18" y="44" font-size="7" font-weight="400" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Largest first · boards from your seat</text><rect x="18.0" y="56" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="26.0" y="70" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#1</text><rect x="42.0" y="62" width="30" height="10" rx="2" fill="#f43f5e" fill-opacity=".14"/><text x="45.0" y="69.5" font-size="5" font-weight="700" fill="#f43f5e" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BLUNDER</text><text x="158.0" y="70" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.287</text><text x="26.0" y="82" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">G5 · Move 12 · rolled 5-4</text><rect x="26.0" y="87" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M29.0 89 L34.2 111.4 L39.5 89Z" fill="#f7f9fb"/><path d="M29.0 143 L34.2 120.6 L39.5 143Z" fill="#8f9db4"/><path d="M39.5 89 L44.8 111.4 L50.0 89Z" fill="#8f9db4"/><path d="M39.5 143 L44.8 120.6 L50.0 143Z" fill="#f7f9fb"/><path d="M50.0 89 L55.2 111.4 L60.5 89Z" fill="#f7f9fb"/><path d="M50.0 143 L55.2 120.6 L60.5 143Z" fill="#8f9db4"/><path d="M60.5 89 L65.8 111.4 L71.0 89Z" fill="#8f9db4"/><path d="M60.5 143 L65.8 120.6 L71.0 143Z" fill="#f7f9fb"/><path d="M71.0 89 L76.2 111.4 L81.5 89Z" fill="#f7f9fb"/><path d="M71.0 143 L76.2 120.6 L81.5 143Z" fill="#8f9db4"/><path d="M81.5 89 L86.8 111.4 L92.0 89Z" fill="#8f9db4"/><path d="M81.5 143 L86.8 120.6 L92.0 143Z" fill="#f7f9fb"/><path d="M92.0 89 L97.2 111.4 L102.5 89Z" fill="#f7f9fb"/><path d="M92.0 143 L97.2 120.6 L102.5 143Z" fill="#8f9db4"/><path d="M102.5 89 L107.8 111.4 L113.0 89Z" fill="#8f9db4"/><path d="M102.5 143 L107.8 120.6 L113.0 143Z" fill="#f7f9fb"/><path d="M113.0 89 L118.2 111.4 L123.5 89Z" fill="#f7f9fb"/><path d="M113.0 143 L118.2 120.6 L123.5 143Z" fill="#8f9db4"/><path d="M123.5 89 L128.8 111.4 L134.0 89Z" fill="#8f9db4"/><path d="M123.5 143 L128.8 120.6 L134.0 143Z" fill="#f7f9fb"/><path d="M134.0 89 L139.2 111.4 L144.5 89Z" fill="#f7f9fb"/><path d="M134.0 143 L139.2 120.6 L144.5 143Z" fill="#8f9db4"/><path d="M144.5 89 L149.8 111.4 L155.0 89Z" fill="#8f9db4"/><path d="M144.5 143 L149.8 120.6 L155.0 143Z" fill="#f7f9fb"/><rect x="90.8" y="87" width="2.4" height="58" fill="#cbd5e1"/><circle cx="65.8" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="128.8" cy="93.4" r="4.4" fill="#2f5ee8"/><circle cx="128.8" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="128.8" cy="111.0" r="4.4" fill="#3f3f46"/><circle cx="76.2" cy="138.6" r="4.4" fill="#3f3f46"/><circle cx="107.8" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="107.8" cy="129.8" r="4.4" fill="#3f3f46"/><circle cx="107.8" cy="121.0" r="4.4" fill="#2f5ee8"/><circle cx="139.2" cy="93.4" r="4.4" fill="#2f5ee8"/><circle cx="139.2" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="139.2" cy="111.0" r="4.4" fill="#3f3f46"/><circle cx="55.2" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="55.2" cy="129.8" r="4.4" fill="#3f3f46"/><circle cx="55.2" cy="121.0" r="4.4" fill="#3f3f46"/><circle cx="76.2" cy="93.4" r="4.4" fill="#3f3f46"/><circle cx="76.2" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="76.2" cy="111.0" r="4.4" fill="#3f3f46"/><circle cx="97.2" cy="93.4" r="4.4" fill="#2f5ee8"/><circle cx="97.2" cy="102.2" r="4.4" fill="#3f3f46"/><circle cx="97.2" cy="111.0" r="4.4" fill="#3f3f46"/><circle cx="44.8" cy="93.4" r="4.4" fill="#2f5ee8"/><circle cx="44.8" cy="102.2" r="4.4" fill="#3f3f46"/><rect x="26.0" y="153" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="26.0" y="161" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="174.0" y="56" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="182.0" y="70" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#2</text><rect x="198.0" y="62" width="30" height="10" rx="2" fill="#f43f5e" fill-opacity=".14"/><text x="201.0" y="69.5" font-size="5" font-weight="700" fill="#f43f5e" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BLUNDER</text><text x="314.0" y="70" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.214</text><text x="182.0" y="82" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">missed a double</text><rect x="182.0" y="87" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M185.0 89 L190.2 111.4 L195.5 89Z" fill="#f7f9fb"/><path d="M185.0 143 L190.2 120.6 L195.5 143Z" fill="#8f9db4"/><path d="M195.5 89 L200.8 111.4 L206.0 89Z" fill="#8f9db4"/><path d="M195.5 143 L200.8 120.6 L206.0 143Z" fill="#f7f9fb"/><path d="M206.0 89 L211.2 111.4 L216.5 89Z" fill="#f7f9fb"/><path d="M206.0 143 L211.2 120.6 L216.5 143Z" fill="#8f9db4"/><path d="M216.5 89 L221.8 111.4 L227.0 89Z" fill="#8f9db4"/><path d="M216.5 143 L221.8 120.6 L227.0 143Z" fill="#f7f9fb"/><path d="M227.0 89 L232.2 111.4 L237.5 89Z" fill="#f7f9fb"/><path d="M227.0 143 L232.2 120.6 L237.5 143Z" fill="#8f9db4"/><path d="M237.5 89 L242.8 111.4 L248.0 89Z" fill="#8f9db4"/><path d="M237.5 143 L242.8 120.6 L248.0 143Z" fill="#f7f9fb"/><path d="M248.0 89 L253.2 111.4 L258.5 89Z" fill="#f7f9fb"/><path d="M248.0 143 L253.2 120.6 L258.5 143Z" fill="#8f9db4"/><path d="M258.5 89 L263.8 111.4 L269.0 89Z" fill="#8f9db4"/><path d="M258.5 143 L263.8 120.6 L269.0 143Z" fill="#f7f9fb"/><path d="M269.0 89 L274.2 111.4 L279.5 89Z" fill="#f7f9fb"/><path d="M269.0 143 L274.2 120.6 L279.5 143Z" fill="#8f9db4"/><path d="M279.5 89 L284.8 111.4 L290.0 89Z" fill="#8f9db4"/><path d="M279.5 143 L284.8 120.6 L290.0 143Z" fill="#f7f9fb"/><path d="M290.0 89 L295.2 111.4 L300.5 89Z" fill="#f7f9fb"/><path d="M290.0 143 L295.2 120.6 L300.5 143Z" fill="#8f9db4"/><path d="M300.5 89 L305.8 111.4 L311.0 89Z" fill="#8f9db4"/><path d="M300.5 143 L305.8 120.6 L311.0 143Z" fill="#f7f9fb"/><rect x="246.8" y="87" width="2.4" height="58" fill="#cbd5e1"/><circle cx="221.8" cy="93.4" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="111.0" r="4.4" fill="#2f5ee8"/><circle cx="253.2" cy="138.6" r="4.4" fill="#3f3f46"/><circle cx="253.2" cy="129.8" r="4.4" fill="#3f3f46"/><circle cx="221.8" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="129.8" r="4.4" fill="#2f5ee8"/><circle cx="200.8" cy="93.4" r="4.4" fill="#3f3f46"/><circle cx="232.2" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="232.2" cy="138.6" r="4.4" fill="#3f3f46"/><circle cx="232.2" cy="129.8" r="4.4" fill="#3f3f46"/><circle cx="232.2" cy="121.0" r="4.4" fill="#2f5ee8"/><circle cx="284.8" cy="93.4" r="4.4" fill="#3f3f46"/><circle cx="284.8" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="263.8" cy="93.4" r="4.4" fill="#3f3f46"/><circle cx="263.8" cy="102.2" r="4.4" fill="#2f5ee8"/><circle cx="263.8" cy="111.0" r="4.4" fill="#2f5ee8"/><circle cx="305.8" cy="138.6" r="4.4" fill="#2f5ee8"/><circle cx="305.8" cy="129.8" r="4.4" fill="#2f5ee8"/><circle cx="305.8" cy="121.0" r="4.4" fill="#2f5ee8"/><rect x="182.0" y="153" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="182.0" y="161" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="18.0" y="184" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="26.0" y="198" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#3</text><rect x="42.0" y="190" width="30" height="10" rx="2" fill="#f43f5e" fill-opacity=".14"/><text x="45.0" y="197.5" font-size="5" font-weight="700" fill="#f43f5e" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BLUNDER</text><text x="158.0" y="198" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.168</text><text x="26.0" y="210" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">G6 · Move 7 · rolled 6-2</text><rect x="26.0" y="215" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M29.0 217 L34.2 239.4 L39.5 217Z" fill="#f7f9fb"/><path d="M29.0 271 L34.2 248.6 L39.5 271Z" fill="#8f9db4"/><path d="M39.5 217 L44.8 239.4 L50.0 217Z" fill="#8f9db4"/><path d="M39.5 271 L44.8 248.6 L50.0 271Z" fill="#f7f9fb"/><path d="M50.0 217 L55.2 239.4 L60.5 217Z" fill="#f7f9fb"/><path d="M50.0 271 L55.2 248.6 L60.5 271Z" fill="#8f9db4"/><path d="M60.5 217 L65.8 239.4 L71.0 217Z" fill="#8f9db4"/><path d="M60.5 271 L65.8 248.6 L71.0 271Z" fill="#f7f9fb"/><path d="M71.0 217 L76.2 239.4 L81.5 217Z" fill="#f7f9fb"/><path d="M71.0 271 L76.2 248.6 L81.5 271Z" fill="#8f9db4"/><path d="M81.5 217 L86.8 239.4 L92.0 217Z" fill="#8f9db4"/><path d="M81.5 271 L86.8 248.6 L92.0 271Z" fill="#f7f9fb"/><path d="M92.0 217 L97.2 239.4 L102.5 217Z" fill="#f7f9fb"/><path d="M92.0 271 L97.2 248.6 L102.5 271Z" fill="#8f9db4"/><path d="M102.5 217 L107.8 239.4 L113.0 217Z" fill="#8f9db4"/><path d="M102.5 271 L107.8 248.6 L113.0 271Z" fill="#f7f9fb"/><path d="M113.0 217 L118.2 239.4 L123.5 217Z" fill="#f7f9fb"/><path d="M113.0 271 L118.2 248.6 L123.5 271Z" fill="#8f9db4"/><path d="M123.5 217 L128.8 239.4 L134.0 217Z" fill="#8f9db4"/><path d="M123.5 271 L128.8 248.6 L134.0 271Z" fill="#f7f9fb"/><path d="M134.0 217 L139.2 239.4 L144.5 217Z" fill="#f7f9fb"/><path d="M134.0 271 L139.2 248.6 L144.5 271Z" fill="#8f9db4"/><path d="M144.5 217 L149.8 239.4 L155.0 217Z" fill="#8f9db4"/><path d="M144.5 271 L149.8 248.6 L155.0 271Z" fill="#f7f9fb"/><rect x="90.8" y="215" width="2.4" height="58" fill="#cbd5e1"/><circle cx="128.8" cy="221.4" r="4.4" fill="#3f3f46"/><circle cx="128.8" cy="230.2" r="4.4" fill="#3f3f46"/><circle cx="149.8" cy="266.6" r="4.4" fill="#2f5ee8"/><circle cx="149.8" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="149.8" cy="248.9" r="4.4" fill="#3f3f46"/><circle cx="139.2" cy="221.4" r="4.4" fill="#2f5ee8"/><circle cx="107.8" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="107.8" cy="257.8" r="4.4" fill="#3f3f46"/><circle cx="34.2" cy="266.6" r="4.4" fill="#2f5ee8"/><circle cx="34.2" cy="257.8" r="4.4" fill="#3f3f46"/><circle cx="97.2" cy="221.4" r="4.4" fill="#2f5ee8"/><circle cx="128.8" cy="221.4" r="4.4" fill="#2f5ee8"/><circle cx="34.2" cy="221.4" r="4.4" fill="#3f3f46"/><circle cx="55.2" cy="266.6" r="4.4" fill="#2f5ee8"/><circle cx="55.2" cy="257.8" r="4.4" fill="#2f5ee8"/><rect x="26.0" y="281" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="26.0" y="289" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="174.0" y="184" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="182.0" y="198" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#4</text><rect x="198.0" y="190" width="30" height="10" rx="2" fill="#f43f5e" fill-opacity=".14"/><text x="201.0" y="197.5" font-size="5" font-weight="700" fill="#f43f5e" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BLUNDER</text><text x="314.0" y="198" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.131</text><text x="182.0" y="210" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">took a pass</text><rect x="182.0" y="215" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M185.0 217 L190.2 239.4 L195.5 217Z" fill="#f7f9fb"/><path d="M185.0 271 L190.2 248.6 L195.5 271Z" fill="#8f9db4"/><path d="M195.5 217 L200.8 239.4 L206.0 217Z" fill="#8f9db4"/><path d="M195.5 271 L200.8 248.6 L206.0 271Z" fill="#f7f9fb"/><path d="M206.0 217 L211.2 239.4 L216.5 217Z" fill="#f7f9fb"/><path d="M206.0 271 L211.2 248.6 L216.5 271Z" fill="#8f9db4"/><path d="M216.5 217 L221.8 239.4 L227.0 217Z" fill="#8f9db4"/><path d="M216.5 271 L221.8 248.6 L227.0 271Z" fill="#f7f9fb"/><path d="M227.0 217 L232.2 239.4 L237.5 217Z" fill="#f7f9fb"/><path d="M227.0 271 L232.2 248.6 L237.5 271Z" fill="#8f9db4"/><path d="M237.5 217 L242.8 239.4 L248.0 217Z" fill="#8f9db4"/><path d="M237.5 271 L242.8 248.6 L248.0 271Z" fill="#f7f9fb"/><path d="M248.0 217 L253.2 239.4 L258.5 217Z" fill="#f7f9fb"/><path d="M248.0 271 L253.2 248.6 L258.5 271Z" fill="#8f9db4"/><path d="M258.5 217 L263.8 239.4 L269.0 217Z" fill="#8f9db4"/><path d="M258.5 271 L263.8 248.6 L269.0 271Z" fill="#f7f9fb"/><path d="M269.0 217 L274.2 239.4 L279.5 217Z" fill="#f7f9fb"/><path d="M269.0 271 L274.2 248.6 L279.5 271Z" fill="#8f9db4"/><path d="M279.5 217 L284.8 239.4 L290.0 217Z" fill="#8f9db4"/><path d="M279.5 271 L284.8 248.6 L290.0 271Z" fill="#f7f9fb"/><path d="M290.0 217 L295.2 239.4 L300.5 217Z" fill="#f7f9fb"/><path d="M290.0 271 L295.2 248.6 L300.5 271Z" fill="#8f9db4"/><path d="M300.5 217 L305.8 239.4 L311.0 217Z" fill="#8f9db4"/><path d="M300.5 271 L305.8 248.6 L311.0 271Z" fill="#f7f9fb"/><rect x="246.8" y="215" width="2.4" height="58" fill="#cbd5e1"/><circle cx="284.8" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="284.8" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="211.2" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="211.2" cy="257.8" r="4.4" fill="#3f3f46"/><circle cx="242.8" cy="266.6" r="4.4" fill="#2f5ee8"/><circle cx="242.8" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="253.2" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="253.2" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="253.2" cy="248.9" r="4.4" fill="#3f3f46"/><circle cx="305.8" cy="221.4" r="4.4" fill="#3f3f46"/><circle cx="305.8" cy="230.2" r="4.4" fill="#3f3f46"/><circle cx="305.8" cy="239.1" r="4.4" fill="#2f5ee8"/><circle cx="200.8" cy="221.4" r="4.4" fill="#3f3f46"/><circle cx="200.8" cy="230.2" r="4.4" fill="#2f5ee8"/><circle cx="200.8" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="200.8" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="200.8" cy="248.9" r="4.4" fill="#3f3f46"/><circle cx="284.8" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="284.8" cy="257.8" r="4.4" fill="#2f5ee8"/><circle cx="284.8" cy="248.9" r="4.4" fill="#3f3f46"/><circle cx="221.8" cy="266.6" r="4.4" fill="#3f3f46"/><circle cx="221.8" cy="257.8" r="4.4" fill="#3f3f46"/><circle cx="221.8" cy="248.9" r="4.4" fill="#3f3f46"/><rect x="182.0" y="281" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="182.0" y="289" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="18.0" y="312" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="26.0" y="326" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#5</text><rect x="42.0" y="318" width="30" height="10" rx="2" fill="#f43f5e" fill-opacity=".14"/><text x="45.0" y="325.5" font-size="5" font-weight="700" fill="#f43f5e" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">BLUNDER</text><text x="158.0" y="326" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.096</text><text x="26.0" y="338" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">G2 · Move 9 · rolled 3-1</text><rect x="26.0" y="343" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M29.0 345 L34.2 367.4 L39.5 345Z" fill="#f7f9fb"/><path d="M29.0 399 L34.2 376.6 L39.5 399Z" fill="#8f9db4"/><path d="M39.5 345 L44.8 367.4 L50.0 345Z" fill="#8f9db4"/><path d="M39.5 399 L44.8 376.6 L50.0 399Z" fill="#f7f9fb"/><path d="M50.0 345 L55.2 367.4 L60.5 345Z" fill="#f7f9fb"/><path d="M50.0 399 L55.2 376.6 L60.5 399Z" fill="#8f9db4"/><path d="M60.5 345 L65.8 367.4 L71.0 345Z" fill="#8f9db4"/><path d="M60.5 399 L65.8 376.6 L71.0 399Z" fill="#f7f9fb"/><path d="M71.0 345 L76.2 367.4 L81.5 345Z" fill="#f7f9fb"/><path d="M71.0 399 L76.2 376.6 L81.5 399Z" fill="#8f9db4"/><path d="M81.5 345 L86.8 367.4 L92.0 345Z" fill="#8f9db4"/><path d="M81.5 399 L86.8 376.6 L92.0 399Z" fill="#f7f9fb"/><path d="M92.0 345 L97.2 367.4 L102.5 345Z" fill="#f7f9fb"/><path d="M92.0 399 L97.2 376.6 L102.5 399Z" fill="#8f9db4"/><path d="M102.5 345 L107.8 367.4 L113.0 345Z" fill="#8f9db4"/><path d="M102.5 399 L107.8 376.6 L113.0 399Z" fill="#f7f9fb"/><path d="M113.0 345 L118.2 367.4 L123.5 345Z" fill="#f7f9fb"/><path d="M113.0 399 L118.2 376.6 L123.5 399Z" fill="#8f9db4"/><path d="M123.5 345 L128.8 367.4 L134.0 345Z" fill="#8f9db4"/><path d="M123.5 399 L128.8 376.6 L134.0 399Z" fill="#f7f9fb"/><path d="M134.0 345 L139.2 367.4 L144.5 345Z" fill="#f7f9fb"/><path d="M134.0 399 L139.2 376.6 L144.5 399Z" fill="#8f9db4"/><path d="M144.5 345 L149.8 367.4 L155.0 345Z" fill="#8f9db4"/><path d="M144.5 399 L149.8 376.6 L155.0 399Z" fill="#f7f9fb"/><rect x="90.8" y="343" width="2.4" height="58" fill="#cbd5e1"/><circle cx="86.8" cy="394.6" r="4.4" fill="#3f3f46"/><circle cx="86.8" cy="385.8" r="4.4" fill="#2f5ee8"/><circle cx="118.2" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="118.2" cy="358.2" r="4.4" fill="#3f3f46"/><circle cx="118.2" cy="367.1" r="4.4" fill="#2f5ee8"/><circle cx="97.2" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="97.2" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="97.2" cy="358.2" r="4.4" fill="#2f5ee8"/><circle cx="97.2" cy="367.1" r="4.4" fill="#3f3f46"/><circle cx="34.2" cy="394.6" r="4.4" fill="#2f5ee8"/><circle cx="34.2" cy="385.8" r="4.4" fill="#2f5ee8"/><circle cx="118.2" cy="394.6" r="4.4" fill="#2f5ee8"/><circle cx="118.2" cy="385.8" r="4.4" fill="#3f3f46"/><circle cx="128.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="128.8" cy="358.2" r="4.4" fill="#3f3f46"/><circle cx="128.8" cy="367.1" r="4.4" fill="#3f3f46"/><circle cx="86.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="86.8" cy="358.2" r="4.4" fill="#2f5ee8"/><circle cx="86.8" cy="367.1" r="4.4" fill="#2f5ee8"/><circle cx="139.2" cy="394.6" r="4.4" fill="#2f5ee8"/><circle cx="139.2" cy="385.8" r="4.4" fill="#3f3f46"/><rect x="26.0" y="409" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="26.0" y="417" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="174.0" y="312" width="148.0" height="120" rx="5" fill="#fff" stroke="#e8e8ec"/><text x="182.0" y="326" font-size="7" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">#6</text><rect x="198.0" y="318" width="24" height="10" rx="2" fill="#f59e0b" fill-opacity=".14"/><text x="201.0" y="325.5" font-size="5" font-weight="700" fill="#f59e0b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">ERROR</text><text x="314.0" y="326" font-size="8" font-weight="700" fill="#be123c" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">−.071</text><text x="182.0" y="338" font-size="6" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">G6 · Move 15 · rolled 4-4</text><rect x="182.0" y="343" width="132.0" height="58" rx="2" fill="#e2e7ef"/><path d="M185.0 345 L190.2 367.4 L195.5 345Z" fill="#f7f9fb"/><path d="M185.0 399 L190.2 376.6 L195.5 399Z" fill="#8f9db4"/><path d="M195.5 345 L200.8 367.4 L206.0 345Z" fill="#8f9db4"/><path d="M195.5 399 L200.8 376.6 L206.0 399Z" fill="#f7f9fb"/><path d="M206.0 345 L211.2 367.4 L216.5 345Z" fill="#f7f9fb"/><path d="M206.0 399 L211.2 376.6 L216.5 399Z" fill="#8f9db4"/><path d="M216.5 345 L221.8 367.4 L227.0 345Z" fill="#8f9db4"/><path d="M216.5 399 L221.8 376.6 L227.0 399Z" fill="#f7f9fb"/><path d="M227.0 345 L232.2 367.4 L237.5 345Z" fill="#f7f9fb"/><path d="M227.0 399 L232.2 376.6 L237.5 399Z" fill="#8f9db4"/><path d="M237.5 345 L242.8 367.4 L248.0 345Z" fill="#8f9db4"/><path d="M237.5 399 L242.8 376.6 L248.0 399Z" fill="#f7f9fb"/><path d="M248.0 345 L253.2 367.4 L258.5 345Z" fill="#f7f9fb"/><path d="M248.0 399 L253.2 376.6 L258.5 399Z" fill="#8f9db4"/><path d="M258.5 345 L263.8 367.4 L269.0 345Z" fill="#8f9db4"/><path d="M258.5 399 L263.8 376.6 L269.0 399Z" fill="#f7f9fb"/><path d="M269.0 345 L274.2 367.4 L279.5 345Z" fill="#f7f9fb"/><path d="M269.0 399 L274.2 376.6 L279.5 399Z" fill="#8f9db4"/><path d="M279.5 345 L284.8 367.4 L290.0 345Z" fill="#8f9db4"/><path d="M279.5 399 L284.8 376.6 L290.0 399Z" fill="#f7f9fb"/><path d="M290.0 345 L295.2 367.4 L300.5 345Z" fill="#f7f9fb"/><path d="M290.0 399 L295.2 376.6 L300.5 399Z" fill="#8f9db4"/><path d="M300.5 345 L305.8 367.4 L311.0 345Z" fill="#8f9db4"/><path d="M300.5 399 L305.8 376.6 L311.0 399Z" fill="#f7f9fb"/><rect x="246.8" y="343" width="2.4" height="58" fill="#cbd5e1"/><circle cx="221.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="358.2" r="4.4" fill="#3f3f46"/><circle cx="200.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="200.8" cy="358.2" r="4.4" fill="#3f3f46"/><circle cx="200.8" cy="367.1" r="4.4" fill="#2f5ee8"/><circle cx="263.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="263.8" cy="358.2" r="4.4" fill="#3f3f46"/><circle cx="263.8" cy="367.1" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="394.6" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="385.8" r="4.4" fill="#2f5ee8"/><circle cx="221.8" cy="376.9" r="4.4" fill="#3f3f46"/><circle cx="253.2" cy="394.6" r="4.4" fill="#2f5ee8"/><circle cx="253.2" cy="385.8" r="4.4" fill="#3f3f46"/><circle cx="253.2" cy="376.9" r="4.4" fill="#2f5ee8"/><circle cx="284.8" cy="394.6" r="4.4" fill="#3f3f46"/><circle cx="242.8" cy="349.4" r="4.4" fill="#2f5ee8"/><circle cx="295.2" cy="394.6" r="4.4" fill="#3f3f46"/><circle cx="211.2" cy="394.6" r="4.4" fill="#3f3f46"/><circle cx="211.2" cy="385.8" r="4.4" fill="#2f5ee8"/><circle cx="211.2" cy="376.9" r="4.4" fill="#2f5ee8"/><rect x="182.0" y="409" width="118.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="182.0" y="417" width="98.0" height="3" rx="1.5" fill="#e4e4e7"/><rect x="18" y="418" width="250" height="4" rx="2.0" fill="#f0f0f3"/><text x="322" y="428" text-anchor="end" font-size="7" fill="#a1a1aa" style="font-family:Geist,system-ui,sans-serif">BackgammonStats</text></svg></div><div class="pg p1"><svg viewBox="0 0 340 440" width="100%" role="img" aria-label="Report page 1: summary, chips, equity and game-by-game scorecard"><rect x="0.5" y="0.5" width="339" height="439" rx="6" fill="#fff" stroke="#e4e4e7"/><text x="18" y="30" font-size="15" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">You vs ThePipCount</text><text x="322" y="30" font-size="7" font-weight="400" fill="#6b6b75" text-anchor="end" style="font-family:Geist,system-ui,sans-serif">Oct 16 · 7 points</text><text x="18" y="46" font-size="7.5" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">You won 7–6 and out-played ThePipCount by</text><text x="178" y="46" font-size="7.5" font-weight="700" fill="#047857" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">9.18 PR.</text><rect x="18.0" y="58" width="56.8" height="34" rx="5" fill="rgba(16,185,129,.14)"/><text x="24.0" y="70" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">RESULT</text><text x="24.0" y="85" font-size="8.5" font-weight="700" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">Won 7–6</text><rect x="79.8" y="58" width="56.8" height="34" rx="5" fill="rgba(16,185,129,.14)"/><text x="85.8" y="70" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">PR</text><text x="85.8" y="85" font-size="10" font-weight="700" fill="#047857" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">4.93</text><rect x="141.6" y="58" width="56.8" height="34" rx="5" fill="#f4f4f5"/><text x="147.6" y="70" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">EQUITY LOST</text><text x="147.6" y="85" font-size="10" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">−0.62</text><rect x="203.4" y="58" width="56.8" height="34" rx="5" fill="#f4f4f5"/><text x="209.39999999999998" y="70" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">PR BY TYPE</text><text x="209.39999999999998" y="85" font-size="8.5" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">4.1 · 7.9</text><rect x="265.2" y="58" width="56.8" height="34" rx="5" fill="#f4f4f5"/><text x="271.2" y="70" font-size="5.5" font-weight="700" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">LUCK</text><text x="271.2" y="85" font-size="10" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:'Geist Mono',ui-monospace,monospace">+2.78</text><text x="18" y="112" font-size="9" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Where your equity went</text><rect x="18.0" y="120" width="176.3" height="9" fill="#3b6cf6"/><rect x="194.3" y="120" width="82.1" height="9" fill="#f59e0b"/><rect x="276.4" y="120" width="45.6" height="9" fill="#f43f5e"/><text x="18" y="140" font-size="6" font-weight="400" fill="#6b6b75" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">■ checker play   ■ takes &amp; drops   ■ doubles</text><text x="18" y="156" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Blunders</text><text x="190" y="156" font-size="7" font-weight="700" fill="#047857" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">6</text><text x="250" y="156" font-size="7" font-weight="700" fill="#09090b" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">17</text><text x="18" y="169" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Errors</text><text x="190" y="169" font-size="7" font-weight="700" fill="#047857" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">7</text><text x="250" y="169" font-size="7" font-weight="700" fill="#09090b" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">13</text><text x="18" y="182" font-size="7" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">All mistakes</text><text x="190" y="182" font-size="7" font-weight="700" fill="#047857" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">13</text><text x="250" y="182" font-size="7" font-weight="700" fill="#09090b" text-anchor="end" style="font-family:'Geist Mono',ui-monospace,monospace">30</text><text x="18" y="210" font-size="9" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Game by game</text><rect x="71.0" y="218" width="22.7" height="14" rx="2" fill="#f4f4f5"/><text x="82.33333333333333" y="228" font-size="5.5" font-weight="700" fill="#52525b" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G1</text><rect x="71.0" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="82.33333333333333" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">2.4</text><rect x="71.0" y="252" width="22.7" height="11" rx="2" fill="#f59e0b" fill-opacity=".22"/><text x="82.33333333333333" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">13.9</text><rect x="95.7" y="218" width="22.7" height="14" rx="2" fill="#f4f4f5"/><text x="107.0" y="228" font-size="5.5" font-weight="700" fill="#52525b" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G2</text><rect x="95.7" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="107.0" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">3.7</text><rect x="95.7" y="252" width="22.7" height="11" rx="2" fill="#f43f5e" fill-opacity=".22"/><text x="107.0" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">18.9</text><rect x="120.3" y="218" width="22.7" height="14" rx="2" fill="#10b981"/><text x="131.66666666666669" y="228" font-size="5.5" font-weight="700" fill="#fff" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G3</text><rect x="120.3" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="131.66666666666669" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">4.8</text><rect x="120.3" y="252" width="22.7" height="11" rx="2" fill="#f59e0b" fill-opacity=".22"/><text x="131.66666666666669" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">13.1</text><rect x="145.0" y="218" width="22.7" height="14" rx="2" fill="#f4f4f5"/><text x="156.33333333333334" y="228" font-size="5.5" font-weight="700" fill="#52525b" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G4</text><rect x="145.0" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="156.33333333333334" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">0.0</text><rect x="145.0" y="252" width="22.7" height="11" rx="2" fill="#f43f5e" fill-opacity=".22"/><text x="156.33333333333334" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">38.4</text><rect x="169.7" y="218" width="22.7" height="14" rx="2" fill="#10b981"/><text x="181.00000000000003" y="228" font-size="5.5" font-weight="700" fill="#fff" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G5</text><rect x="169.7" y="238" width="22.7" height="11" rx="2" fill="#a1a1aa" fill-opacity=".22"/><text x="181.00000000000003" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">12.3</text><rect x="169.7" y="252" width="22.7" height="11" rx="2" fill="#a1a1aa" fill-opacity=".22"/><text x="181.00000000000003" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">8.4</text><rect x="194.3" y="218" width="22.7" height="14" rx="2" fill="#f4f4f5"/><text x="205.66666666666669" y="228" font-size="5.5" font-weight="700" fill="#52525b" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G6</text><rect x="194.3" y="238" width="22.7" height="11" rx="2" fill="#f59e0b" fill-opacity=".22"/><text x="205.66666666666669" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">15.5</text><rect x="194.3" y="252" width="22.7" height="11" rx="2" fill="#a1a1aa" fill-opacity=".22"/><text x="205.66666666666669" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">9.2</text><rect x="219.0" y="218" width="22.7" height="14" rx="2" fill="#10b981"/><text x="230.33333333333334" y="228" font-size="5.5" font-weight="700" fill="#fff" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G7</text><rect x="219.0" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="230.33333333333334" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">2.8</text><rect x="219.0" y="252" width="22.7" height="11" rx="2" fill="#a1a1aa" fill-opacity=".22"/><text x="230.33333333333334" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">11.1</text><rect x="243.7" y="218" width="22.7" height="14" rx="2" fill="#10b981"/><text x="255.00000000000003" y="228" font-size="5.5" font-weight="700" fill="#fff" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G8</text><rect x="243.7" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="255.00000000000003" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">0.0</text><rect x="243.7" y="252" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="255.00000000000003" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">3.1</text><rect x="268.3" y="218" width="22.7" height="14" rx="2" fill="#10b981"/><text x="279.6666666666667" y="228" font-size="5.5" font-weight="700" fill="#fff" text-anchor="middle" style="font-family:Geist,system-ui,sans-serif">G9</text><rect x="268.3" y="238" width="22.7" height="11" rx="2" fill="#047857" fill-opacity=".22"/><text x="279.6666666666667" y="246" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">1.3</text><rect x="268.3" y="252" width="22.7" height="11" rx="2" fill="#10b981" fill-opacity=".22"/><text x="279.6666666666667" y="260" font-size="5.5" font-weight="600" fill="#09090b" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">7.3</text><text x="18" y="228" font-size="6.5" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Game</text><text x="18" y="246" font-size="6.5" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Your PR</text><text x="18" y="260" font-size="6.5" font-weight="400" fill="#52525b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Opp. PR</text><rect x="294" y="218" width="28" height="14" rx="2" fill="rgba(16,185,129,.14)"/><text x="308" y="228" font-size="6" font-weight="700" fill="#047857" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">7–6</text><text x="308" y="246" font-size="6" font-weight="700" fill="#047857" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">4.93</text><text x="308" y="260" font-size="6" font-weight="700" fill="#a16207" text-anchor="middle" style="font-family:'Geist Mono',ui-monospace,monospace">14.11</text><rect x="18" y="278" width="304" height="3" rx="1.5" fill="#f0f0f3"/><rect x="18" y="288" width="304" height="3" rx="1.5" fill="#f0f0f3"/><rect x="18" y="298" width="304" height="3" rx="1.5" fill="#f0f0f3"/><rect x="18" y="308" width="304" height="3" rx="1.5" fill="#f0f0f3"/><text x="18" y="336" font-size="9" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">What to work on</text><circle cx="21" cy="349" r="1.6" fill="#3b6cf6"/><rect x="28" y="347" width="270" height="4" rx="2.0" fill="#e4e4e7"/><circle cx="21" cy="362" r="1.6" fill="#3b6cf6"/><rect x="28" y="360" width="230" height="4" rx="2.0" fill="#e4e4e7"/><circle cx="21" cy="375" r="1.6" fill="#3b6cf6"/><rect x="28" y="373" width="250" height="4" rx="2.0" fill="#e4e4e7"/><text x="18" y="398" font-size="9" font-weight="700" fill="#09090b" text-anchor="start" style="font-family:Geist,system-ui,sans-serif">Cube decisions</text><rect x="18" y="405" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="95" y="405" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="172" y="405" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="249" y="405" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="18" y="417" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="95" y="417" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="172" y="417" width="73" height="9" rx="2" fill="#f4f4f5"/><rect x="249" y="417" width="73" height="9" rx="2" fill="#f4f4f5"/><text x="322" y="428" text-anchor="end" font-size="7" fill="#a1a1aa" style="font-family:Geist,system-ui,sans-serif">BackgammonStats</text></svg></div><a class="btn dl" href="#waitlist"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> Download PDF</a></div></div></section><section class="sec" style="background:var(--bg)"><div class="wrap"><div class="sec-h c"><span class="eyebrow">And more</span><h2>Know your game. Know theirs.</h2></div><div class="fv"><div class="card fvc"><div class="ico" style="background:#e6edff;color:#2448c8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M21.5 20a6.5 6.5 0 0 0-4-6"/></svg></div><h3>Scout your opponent</h3><p>Head-to-head record and a brief from your matches.</p><div class="vbox"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span class="av" style="background:#52525b;margin:0">N</span><b>nightowl</b><span class="pill win" style="margin-left:auto">You lead 3–1</span></div><div class="tierb" style="grid-template-columns:70px 1fr 40px"><span>Your PR</span><span class="t"><i style="width:42%;background:#3b6cf6"></i></span><b class="mono" style="font-size:12px;text-align:right">6.9</b></div><div class="tierb" style="grid-template-columns:70px 1fr 40px"><span>Their PR</span><span class="t"><i style="width:68%;background:#71717a"></i></span><b class="mono" style="font-size:12px;text-align:right">11.2</b></div><div class="brief" style="margin-top:10px;font-size:12.5px"><span style="color:var(--losst);font-weight:600">Your leak:</span> 5 of 6 costliest decisions were checker plays.</div></div></div><div class="card fvc"><div class="ico" style="background:rgba(16,185,129,.14);color:#047857"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></div><h3>Watch your PR fall</h3><p>Your form against the skill tiers.</p><div class="vbox"><svg viewBox="0 0 300 120" width="100%" aria-hidden="true"><line x1="0" x2="300" y1="60" y2="60" stroke="#a16207" stroke-dasharray="4 4"/><text x="4" y="56" text-anchor="start" font-size="10" fill="#a16207" font-family="Geist,sans-serif">Intermediate</text><line x1="0" x2="300" y1="85" y2="85" stroke="#047857" stroke-dasharray="4 4"/><text x="4" y="81" text-anchor="start" font-size="10" fill="#047857" font-family="Geist,sans-serif">Advanced</text><path d="M10 20 L38 34 L66 25 L94 45 L122 53 L150 42 L178 62 L206 71 L234 61 L262 80 L290 86 L290 120 L10 120Z" fill="#3b6cf6" fill-opacity=".10"/><path d="M10 20 L38 34 L66 25 L94 45 L122 53 L150 42 L178 62 L206 71 L234 61 L262 80 L290 86" fill="none" stroke="#3b6cf6" stroke-width="2.5"/><circle cx="10" cy="20" r="4" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/><circle cx="38" cy="34" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="66" cy="25" r="4" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/><circle cx="94" cy="45" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="122" cy="53" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="150" cy="42" r="4" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/><circle cx="178" cy="62" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="206" cy="71" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="234" cy="61" r="4" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/><circle cx="262" cy="80" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/><circle cx="290" cy="86" r="4" fill="#10b981" stroke="#fff" stroke-width="1.5"/></svg></div></div><div class="card fvc"><div class="ico" style="background:rgba(245,158,11,.16);color:#a16207"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/></svg></div><h3>See every session</h3><p>Activity calendar and your matches by tier.</p><div class="vbox"><div class="cal" aria-hidden="true"><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#6ee7b7"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#eceef2"></i><i style="background:#10b981"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#6ee7b7"></i><i style="background:#6ee7b7"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#6ee7b7"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#10b981"></i><i style="background:#10b981"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#fda4af"></i><i style="background:#6ee7b7"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#6ee7b7"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#fda4af"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#a7f3d0"></i><i style="background:#10b981"></i><i style="background:#f43f5e"></i><i style="background:#6ee7b7"></i><i style="background:#10b981"></i><i style="background:#a7f3d0"></i><i style="background:#fda4af"></i><i style="background:#a7f3d0"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#a7f3d0"></i><i style="background:#10b981"></i><i style="background:#a7f3d0"></i><i style="background:#eceef2"></i><i style="background:#fda4af"></i><i style="background:#eceef2"></i><i style="background:#eceef2"></i><i style="background:#f43f5e"></i><i style="background:#6ee7b7"></i><i style="background:#eceef2"></i><i style="background:#10b981"></i><i style="background:#eceef2"></i><i style="background:#a7f3d0"></i></div><div style="height:12px"></div><div class="tierb"><span>World class</span><span class="t"><i style="width:10%;background:#047857"></i></span><b class="mono" style="font-size:12px;text-align:right">2</b></div><div class="tierb"><span>Expert</span><span class="t"><i style="width:38%;background:#10b981"></i></span><b class="mono" style="font-size:12px;text-align:right">9</b></div><div class="tierb"><span>Advanced</span><span class="t"><i style="width:62%;background:#6ee7b7"></i></span><b class="mono" style="font-size:12px;text-align:right">14</b></div><div class="tierb"><span>Intermediate</span><span class="t"><i style="width:46%;background:#f59e0b"></i></span><b class="mono" style="font-size:12px;text-align:right">10</b></div><div class="tierb"><span>Casual</span><span class="t"><i style="width:18%;background:#f43f5e"></i></span><b class="mono" style="font-size:12px;text-align:right">4</b></div></div></div></div><p style="text-align:center;font-size:12px;color:var(--dim);margin:14px 0 0">All numbers sample data</p></div></section><section class="sec" id="how" style="background:#fff;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)"><div class="wrap"><div class="sec-h c"><span class="eyebrow">How it works</span><h2>File to mistakes in two minutes.</h2></div><div class="how2"><div class="card hs" style="align-items:center"><span class="n" style="background:#2f5ee8">1</span><div><h3>Drop your files</h3></div></div><div class="card hs" style="align-items:center"><span class="n" style="background:#10b981">2</span><div><h3>gnubg analyzes</h3><p>Every move checked, with live progress.</p></div></div><div class="card hs" style="align-items:center"><span class="n" style="background:#f59e0b">3</span><div><h3>Review mistakes</h3></div></div></div><div class="srcrow"><span style="color:var(--dim);font-size:13px;font-weight:500;align-self:center">Works with</span><span class="src">Backgammon Studio</span><span class="src">Backgammon Galaxy</span><span class="src">Extreme Gammon</span><span class="src">GNU Backgammon</span><span class="src">Jellyfish</span><span class="src">Over the board</span></div></div></section></main><footer><div class="wrap"><a class="brand" href="#" style="font-size:14px"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#09090b"/><circle cx="11" cy="11" r="3" fill="#fafafa"/><circle cx="21" cy="21" r="3" fill="#fafafa"/><circle cx="21" cy="11" r="3" fill="#2f5ee8"/></svg>BackgammonStats</a><span>© 2026 BackgammonStats</span><span style="margin-left:auto">Already invited? <a href="https://app.backgammonstats.com">Sign in →</a></span></div></footer><div class="sticky"><a class="btn" href="#waitlist">Join the waitlist <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></a></div></div>
+<script>
+(function(){
+  // Waitlist sign-ups go to Supabase (public anon key; row-level security
+  // allows inserts only). Same table as the previous page.
+  var SUPABASE_URL='https://srrzdtmmezexzbfcfaws.supabase.co';
+  var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNycnpkdG1tZXpleHpiZmNmYXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMzI5NjcsImV4cCI6MjA5MDkwODk2N30.rbuPz_CoZoDhgW37XqAbAdLVeWLAv7250uOGQR4WUqM';
+  function valid(e){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)}
+  // The only place sign-ups are sent. Resolves when stored (an address
+  // that's already on the list counts as stored).
+  function handleSignup(rec){
+    return fetch(SUPABASE_URL+'/rest/v1/waitlist_signups',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Prefer':'return=minimal'},
+      body:JSON.stringify({full_name:rec.name,email:rec.email,sites:rec.sites})
+    }).then(function(res){
+      if(res.ok||res.status===409) return;
+      return res.text().then(function(t){ if(/23505|duplicate key/i.test(t)) return; throw new Error('HTTP '+res.status+': '+t); });
+    });
+  }
+  function clearMsg(f){var old=f.querySelectorAll('.err');old.forEach(function(o){o.remove()})}
+  function fieldError(f,em,msg){em.classList.add('bad');em.setAttribute('aria-invalid','true');
+    var d=document.createElement('div');d.className='err';d.id=em.id+'-err';d.textContent=msg;
+    em.setAttribute('aria-describedby',d.id);em.insertAdjacentElement('afterend',d);em.focus()}
+  function formError(f,btn,msg){var d=document.createElement('div');d.className='err';d.setAttribute('role','alert');d.textContent=msg;d.style.marginTop='10px';
+    (f.classList.contains('hform')?f:btn).insertAdjacentElement('afterend',d)}
+  // chips act as checkboxes
+  document.querySelectorAll('.chip').forEach(function(c){
+    function t(){c.classList.toggle('on');c.setAttribute('aria-checked',c.classList.contains('on'))}
+    c.addEventListener('click',t);c.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();t()}});
+  });
+  document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit',function(ev){
+      ev.preventDefault();
+      var em=f.querySelector('input[type=email]'); var v=(em.value||'').trim().toLowerCase();
+      var btn=f.querySelector('button[type=submit]');
+      clearMsg(f); if(f.nextElementSibling&&f.nextElementSibling.classList.contains('err')) f.nextElementSibling.remove();
+      em.classList.remove('bad'); em.removeAttribute('aria-invalid'); em.removeAttribute('aria-describedby');
+      if(!valid(v)){fieldError(f,em,'Enter a full email address, like name@example.com.');return}
+      var rec={email:v,name:((f.querySelector('#nm')||{}).value||'').trim(),
+               sites:[].map.call(f.querySelectorAll('.chip.on'),function(c){return c.textContent.trim()})};
+      var label=btn.innerHTML; btn.disabled=true; btn.setAttribute('aria-busy','true'); btn.textContent='Joining…';
+      handleSignup(rec).then(function(){
+        var box=document.createElement('div');box.setAttribute('role','status');box.setAttribute('aria-live','polite');
+        if(f.classList.contains('hform')){box.className='fine';box.style.cssText='color:#047857;font-weight:600;font-size:15px';box.textContent='You’re on the list — we’ll email you.';}
+        else{box.className='card done';box.innerHTML='<h3 style="font-size:26px;margin:0 0 8px">You’re on the list.</h3><p style="color:#52525b;margin:0">We’ll email <b></b> when your invite is ready. Nothing else.</p>';box.querySelector('b').textContent=v;}
+        f.replaceWith(box);
+      }).catch(function(err){
+        console.error('Waitlist sign-up failed:',err);
+        btn.disabled=false; btn.removeAttribute('aria-busy'); btn.innerHTML=label;
+        formError(f,btn,'Something went wrong — please try again in a moment.');
+      });
+    });
+  });
+  // Phones: hide the sticky "Join the waitlist" bar while the full form is on screen.
+  var sticky=document.querySelector('.sticky'), wl=document.getElementById('waitlist');
+  if(sticky&&wl&&'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){es.forEach(function(e){sticky.style.visibility=e.isIntersecting?'hidden':''})},{threshold:0.15}).observe(wl);
+  }
+})();
+</script></body></html>

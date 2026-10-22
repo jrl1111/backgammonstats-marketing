@@ -20,6 +20,12 @@ Edit `index.html` and push to main. Vercel auto-deploys in seconds.
 
 ## Signup form
 
-Currently writes to `localStorage` only. To capture real leads, replace the
-`handleSignup` function with a POST to Supabase, Formspree, ConvertKit, or
-a simple Vercel Edge Function.
+Both forms (the hero's email field and the full waitlist form) post to the
+Supabase table `waitlist_signups` (`full_name`, `email`, `sites[]`) with the
+public anon key; row-level security allows inserts only. `handleSignup` in the
+page's script is the only place sign-ups are sent. A failed request shows an
+error under the form and keeps what was typed.
+
+## Social image
+
+`og.png` (1200 × 630) is referenced by the Open Graph / Twitter tags.
